@@ -157,7 +157,7 @@ public class ResponseImpl implements Response {
 
     @Override
     public byte[] bodyAsBytes() throws IOException {
-        Path path = Files.createTempFile("QuickHttp", "response");
+        Path path = Files.createTempFile("QuickHttp", ".response");
         bodyAsFile(path);
         responseMeta.body = Files.readAllBytes(path);
         Files.deleteIfExists(path);
@@ -209,7 +209,7 @@ public class ResponseImpl implements Response {
                 }
             }
         }
-        if (contentLength() > 0) {
+        if (contentLength() > 0 && !responseMeta.headerMap.containsKey("Content-Encoding")) {
             //检查是否下载成功
             long expectFileSize = fileSize + contentLength();
             if (Files.notExists(file) || Files.size(file) != expectFileSize) {
