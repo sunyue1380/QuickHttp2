@@ -439,10 +439,10 @@ public class RequestExecutor {
             requestMeta.proxy = QuickHttpConfig.proxy;
         }
 
-        if (0 == requestMeta.connectTimeoutMillis) {
+        if (3000 == requestMeta.connectTimeoutMillis) {
             requestMeta.connectTimeoutMillis = clientConfig.connectTimeoutMillis;
         }
-        if (0 == requestMeta.readTimeoutMillis) {
+        if (5000 == requestMeta.readTimeoutMillis) {
             requestMeta.readTimeoutMillis = clientConfig.readTimeoutMillis;
         }
         if (requestMeta.followRedirects) {
