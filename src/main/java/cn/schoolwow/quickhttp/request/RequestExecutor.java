@@ -74,6 +74,8 @@ public class RequestExecutor {
                     break;
                 } catch (SocketTimeoutException | ConnectException e) {
                     logger.warn("[链接超时]重试{}/{},原因:{},地址:{}", retryTimes, clientConfig.retryTimes, e.getMessage(), requestMeta.url);
+                    requestMeta.connectTimeoutMillis = requestMeta.connectTimeoutMillis*2;
+                    requestMeta.readTimeoutMillis = requestMeta.readTimeoutMillis*2;
                     retryTimes++;
                 }
             }

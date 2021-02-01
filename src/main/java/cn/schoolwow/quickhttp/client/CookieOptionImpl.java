@@ -27,6 +27,16 @@ public class CookieOptionImpl implements CookieOption {
     }
 
     @Override
+    public String getCookieString(String domain) {
+        List<HttpCookie> httpCookieList = getCookieList(domain);
+        StringBuilder builder = new StringBuilder();
+        for(HttpCookie httpCookie:httpCookieList){
+            builder.append(httpCookie.getName()+"="+httpCookie.getValue()+";");
+        }
+        return builder.toString();
+    }
+
+    @Override
     public HttpCookie getCookie(String domain, String name) {
         List<HttpCookie> httpCookieListStore = cookieManager.getCookieStore().getCookies();
         for (HttpCookie httpCookie : httpCookieListStore) {
@@ -70,7 +80,7 @@ public class CookieOptionImpl implements CookieOption {
     }
 
     @Override
-    public void addCookie(String name, String value, String domain) {
+    public void addCookie(String domain, String name, String value) {
         HttpCookie httpCookie = new HttpCookie(name, value);
         httpCookie.setMaxAge(3600000);
         httpCookie.setDomain(domain);

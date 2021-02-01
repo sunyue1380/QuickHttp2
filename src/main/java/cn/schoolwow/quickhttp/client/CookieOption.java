@@ -18,6 +18,12 @@ public interface CookieOption {
     boolean hasCookie(String domain, String name);
 
     /**
+     * 获取指定域名下Cookie头部
+     * @param domain 域名
+     * */
+    String getCookieString(String domain);
+
+    /**
      * 获取cookie
      *
      * @param domain 域名
@@ -48,11 +54,11 @@ public interface CookieOption {
     /**
      * 添加Cookie
      *
+     * @param domain 域名
      * @param name   cookie键
      * @param value  cookie值
-     * @param domain 域名
      */
-    void addCookie(String name, String value, String domain);
+    void addCookie(String domain, String name, String value);
 
     /**
      * 添加Cookie

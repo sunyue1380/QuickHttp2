@@ -27,12 +27,12 @@ public class ClientConfig {
     /**
      * 连接超时(毫秒)
      */
-    public int connectTimeoutMillis;
+    public int connectTimeoutMillis = 3000;
 
     /**
      * 读取超时(毫秒)
      */
-    public int readTimeoutMillis;
+    public int readTimeoutMillis = 5000;
 
     /**
      * 是否自动重定向
