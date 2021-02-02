@@ -2,6 +2,7 @@ package cn.schoolwow.quickhttp.response;
 
 import cn.schoolwow.quickhttp.document.Document;
 import cn.schoolwow.quickhttp.document.DocumentParser;
+import cn.schoolwow.quickhttp.domain.ClientConfig;
 import cn.schoolwow.quickhttp.domain.RequestMeta;
 import cn.schoolwow.quickhttp.domain.ResponseMeta;
 import com.alibaba.fastjson.JSON;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -31,10 +33,12 @@ public class ResponseImpl implements Response {
     private Logger logger = LoggerFactory.getLogger(ResponseImpl.class);
     private RequestMeta requestMeta;
     private ResponseMeta responseMeta;
+    private ClientConfig clientConfig;
 
-    public ResponseImpl(RequestMeta requestMeta, ResponseMeta responseMeta) {
+    public ResponseImpl(RequestMeta requestMeta, ResponseMeta responseMeta, ClientConfig clientConfig) {
         this.requestMeta = requestMeta;
         this.responseMeta = responseMeta;
+        this.clientConfig = clientConfig;
     }
 
     @Override
@@ -113,6 +117,17 @@ public class ResponseImpl implements Response {
     @Override
     public Map<String, String> headers() {
         return responseMeta.headerMap;
+    }
+
+    @Override
+    public boolean hasCookie(String name) {
+        return clientConfig.cookieOption.hasCookie(responseMeta.topHost,name);
+    }
+
+    @Override
+    public boolean hasCookieWithValue(String name, String value) {
+        HttpCookie httpCookie = clientConfig.cookieOption.getCookie(responseMeta.topHost,name);
+        return null!=httpCookie&&httpCookie.getValue().equals(value);
     }
 
     @Override

@@ -54,16 +54,20 @@ public interface Response {
 
     /**
      * 是否有该Header
+     * @param name 头部名称
      */
     boolean hasHeader(String name);
 
     /**
      * 是否存在该Header
+     * @param name 头部名称
+     * @param value 头部值
      */
     boolean hasHeader(String name, String value);
 
     /**
      * 获取头部信息
+     * @param name 头部名称
      */
     String header(String name);
 
@@ -71,6 +75,19 @@ public interface Response {
      * 获取所有Header信息
      */
     Map<String, String> headers();
+
+    /**
+     * 是否存在指定Cookie
+     * @param name cookie名称
+     * */
+    boolean hasCookie(String name);
+
+    /**
+     * 是否存在指定Cookie
+     * @param name cookie名称
+     * @param value cookie值
+     * */
+    boolean hasCookieWithValue(String name, String value);
 
     /**
      * 设置最大下载速率(kb/s)

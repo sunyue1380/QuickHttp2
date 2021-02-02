@@ -18,6 +18,11 @@ public class ResponseMeta {
     public HttpURLConnection httpURLConnection;
 
     /**
+     * 顶级域
+     */
+    public String topHost;
+
+    /**
      * 状态码
      */
     public int statusCode;

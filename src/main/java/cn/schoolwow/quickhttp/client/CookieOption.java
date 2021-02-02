@@ -46,10 +46,10 @@ public interface CookieOption {
     /**
      * 添加Cookie
      *
-     * @param cookie Cookie字段
      * @param domain 域名
+     * @param cookie Cookie字段
      */
-    void addCookieString(String cookie, String domain);
+    void addCookieString(String domain, String cookie);
 
     /**
      * 添加Cookie

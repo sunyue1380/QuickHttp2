@@ -147,6 +147,12 @@ public class RequestExecutor {
                 throw new IOException("http状态异常!状态码:" + responseMeta.statusCode + ",地址:" + requestMeta.url);
             }
         }
+        //获取顶级域
+        responseMeta.topHost = responseMeta.httpURLConnection.getURL().getHost();
+        String substring = responseMeta.topHost.substring(0,responseMeta.topHost.lastIndexOf("."));
+        if(substring.contains(".")){
+            responseMeta.topHost = responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
+        }
         //提取头部信息
         {
             Map<String, List<String>> headerFields = httpURLConnection.getHeaderFields();
@@ -185,7 +191,7 @@ public class RequestExecutor {
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-        Response response = new ResponseImpl(requestMeta, responseMeta);
+        Response response = new ResponseImpl(requestMeta, responseMeta,clientConfig);
         if (logger.isDebugEnabled()) {
             logger.debug("[请求与响应]\n{}", getRequestAndResponseLog(requestMeta, response));
         }

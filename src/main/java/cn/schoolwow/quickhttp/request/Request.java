@@ -7,9 +7,11 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 public interface Request extends Cloneable {
@@ -151,6 +153,35 @@ public interface Request extends Cloneable {
      * @param headerMap 头部字段信息
      */
     Request headers(Map<String, String> headerMap);
+
+    /**
+     * 设置Cookie头部
+     *
+     * @param name cookie名称
+     * @param value cookie值
+     */
+    Request cookie(String name, String value);
+
+    /**
+     * 设置Cookie头部
+     *
+     * @param cookie cookie字符串
+     */
+    Request cookie(String cookie);
+
+    /**
+     * 设置Cookie头部
+     *
+     * @param httpCookie cookie信息
+     */
+    Request cookie(HttpCookie httpCookie);
+
+    /**
+     * 设置Cookie头部列表
+     *
+     * @param httpCookieList cookie列表
+     */
+    Request cookie(List<HttpCookie> httpCookieList);
 
     /**
      * 设置路径请求参数

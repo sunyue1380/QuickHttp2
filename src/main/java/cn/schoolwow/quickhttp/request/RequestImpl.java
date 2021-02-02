@@ -8,12 +8,14 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.*;
+import java.net.HttpCookie;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -134,6 +136,38 @@ public class RequestImpl implements Request {
     public Request headers(Map<String, String> headerMap) {
         requestMeta.headers.putAll(headerMap);
         return this;
+    }
+
+    @Override
+    public Request cookie(String name, String value) {
+        HttpCookie httpCookie = new HttpCookie(name,value);
+        httpCookie.setMaxAge(3600000);
+        httpCookie.setDomain("."+requestMeta.url.getHost());
+        httpCookie.setPath("/");
+        httpCookie.setVersion(0);
+        httpCookie.setDiscard(false);
+        clientConfig.cookieOption.addCookie(httpCookie);
+        return this;
+    }
+
+    @Override
+    public Request cookie(String cookie) {
+        clientConfig.cookieOption.addCookieString("."+requestMeta.url.getHost(),cookie);
+        return this;
+    }
+
+    @Override
+    public Request cookie(HttpCookie httpCookie) {
+        clientConfig.cookieOption.addCookie(httpCookie);
+        return this;
+    }
+
+    @Override
+    public Request cookie(List<HttpCookie> httpCookieList) {
+        for(HttpCookie httpCookie:httpCookieList){
+            cookie(httpCookie);
+        }
+        return null;
     }
 
     @Override

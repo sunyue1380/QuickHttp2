@@ -16,8 +16,8 @@ CookieOption cookieOption = QuickHttp.newQuickHttpClient().clientConfig().cookie
 |getCookie(String domain, String name)|获取cookie|
 |getCookieList(String domain)|获取指定域名下的Cookie列表|
 |getCookieList()|获取所有Cookie|
-|addCookieString(String cookie, String domain)|添加Cookie|
-|addCookie(String domain, String name, String value)|添加Cookie,**v2.0.1版本变更了参数顺序**|
+|addCookieString(String domain, String cookie)|添加Cookie,**从v2.0.1开始将domain参数作为第一个参数**|
+|addCookie(String domain, String name, String value)|添加Cookie,**从v2.0.1开始将domain参数作为第一个参数**|
 |addCookie(HttpCookie httpCookie)|添加Cookie|
 |addCookie(List<HttpCookie> httpCookieList)|添加Cookie列表|
 |removeCookie(String domain)|删除指定域名下所有Cookie|

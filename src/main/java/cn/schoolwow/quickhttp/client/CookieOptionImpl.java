@@ -65,7 +65,7 @@ public class CookieOptionImpl implements CookieOption {
     }
 
     @Override
-    public void addCookieString(String cookie, String domain) {
+    public void addCookieString(String domain, String cookie) {
         if (null == cookie || cookie.isEmpty()) {
             return;
         }
