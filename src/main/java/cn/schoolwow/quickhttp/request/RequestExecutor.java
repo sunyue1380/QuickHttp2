@@ -355,9 +355,11 @@ public class RequestExecutor {
                 httpURLConnection.setChunkedStreamingMode(0);
                 MDC.put("body", requestMeta.dataFileMap.toString());
             } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || (requestMeta.requestBody != null && requestMeta.requestBody.length > 0)) {
-                httpURLConnection.setRequestProperty("Content-Type", requestMeta.userContentType + "; charset=" + requestMeta.charset + ";");
+                httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType) + "; charset=" + requestMeta.charset + ";");
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
-                MDC.put("body", requestMeta.userContentType.equals("application/json") ? new String(requestMeta.requestBody) : "");
+                if(null!=requestMeta.userContentType&&requestMeta.userContentType.equals("application/json")){
+                    MDC.put("body", new String(requestMeta.requestBody,requestMeta.charset));
+                }
             } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + requestMeta.charset);
                 if (!requestMeta.dataMap.isEmpty()) {
@@ -379,13 +381,13 @@ public class RequestExecutor {
             if (null != requestMeta.contentType && requestMeta.contentType.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", requestMeta.contentType);
             }
-            //开始正式写入数据
-            httpURLConnection.setDoOutput(true);
             try {
                 clientConfig.cookieManager.get(requestMeta.url.toURI(), httpURLConnection.getHeaderFields());
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
+            //开始正式写入数据
+            httpURLConnection.setDoOutput(true);
             OutputStream outputStream = httpURLConnection.getOutputStream();
             final BufferedWriter w = new BufferedWriter(new OutputStreamWriter(outputStream, requestMeta.charset));
             if (Request.ContentType.MULTIPART_FORMDATA.equals(requestMeta.userContentType) || !requestMeta.dataFileMap.isEmpty()) {

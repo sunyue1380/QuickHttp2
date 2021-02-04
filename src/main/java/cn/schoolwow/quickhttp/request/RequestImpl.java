@@ -268,7 +268,7 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public Response execute() throws IOException {
+    public Response execute() {
         RequestExecutor requestExecutor = new RequestExecutor(this, clientConfig);
         return requestExecutor.execute();
     }
@@ -283,13 +283,8 @@ public class RequestImpl implements Request {
             }
         }
         clientConfig.threadPoolExecutor.execute(() -> {
-            try {
-                Response response = execute();
-                responseListener.executeSuccess(this, response);
-            } catch (IOException e) {
-                e.printStackTrace();
-                responseListener.executeFail(this, e);
-            }
+            Response response = execute();
+            responseListener.executeSuccess(this, response);
         });
     }
 
