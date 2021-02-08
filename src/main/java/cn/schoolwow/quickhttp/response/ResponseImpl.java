@@ -21,10 +21,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -178,6 +175,12 @@ public class ResponseImpl implements Response {
         Files.deleteIfExists(path);
         disconnect();
         return responseMeta.body;
+    }
+
+    @Override
+    public void bodyAsFile(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        bodyAsFile(path);
     }
 
     @Override

@@ -79,10 +79,12 @@ public class RequestExecutor {
                     retryTimes++;
                 }
             }
-            handleRedirect(request, response);
-            //请求执行成功
-            for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
-                quickHttpClientListener.executeSuccess(request, response);
+            if(null!=response){
+                handleRedirect(request, response);
+                //请求执行成功
+                for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
+                    quickHttpClientListener.executeSuccess(request, response);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

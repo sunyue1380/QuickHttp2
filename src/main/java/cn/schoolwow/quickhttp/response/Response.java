@@ -128,6 +128,12 @@ public interface Response {
      * 将输入流写入到指定文件
      * <p>若文件已存在,则会追加到文件尾部</p>
      */
+    void bodyAsFile(String filePath) throws IOException;
+
+    /**
+     * 将输入流写入到指定文件
+     * <p>若文件已存在,则会追加到文件尾部</p>
+     */
     void bodyAsFile(Path file) throws IOException;
 
     /**
