@@ -45,7 +45,9 @@ System.out.println(response.body());
 
 # 反馈
 
-目前QuickHttp还不成熟,还在不断完善中.若有问题请提交Issue或者发送邮件到648823596@qq.com,作者将第一时间跟进并努力解决.同时欢迎热心人士提交PR,共同完善本项目!
+* 提交Issue
+* 邮箱: 648823596@qq.com
+* QQ群: 958754367(quick系列交流,群初建,人较少)
 
 # 开源协议
 本软件使用 [GPL](http://www.gnu.org/licenses/gpl-3.0.html) 开源协议!
