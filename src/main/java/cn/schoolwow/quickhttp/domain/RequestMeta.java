@@ -52,12 +52,12 @@ public class RequestMeta implements Cloneable, Serializable {
     /**
      * 头部信息
      */
-    public Map<String, String> headers = new LinkedHashMap<>();
+    public Map<String, String> headerMap = new LinkedHashMap<>();
 
     /**
      * parameter信息
      */
-    public Map<String, String> parameters = new LinkedHashMap<>();
+    public Map<String, String> parameterMap = new LinkedHashMap<>();
 
     /**
      * 表单信息
@@ -105,7 +105,7 @@ public class RequestMeta implements Cloneable, Serializable {
     public int retryTimes = 3;
 
     public RequestMeta() {
-        headers.put("User-Agent", Request.UserAgent.CHROME.userAgent);
-        headers.put("Accept-Encoding", "gzip, deflate");
+        headerMap.put("User-Agent", Request.UserAgent.CHROME.userAgent);
+        headerMap.put("Accept-Encoding", "gzip, deflate");
     }
 }

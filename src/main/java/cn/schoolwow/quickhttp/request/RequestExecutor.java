@@ -306,9 +306,9 @@ public class RequestExecutor {
      */
     private HttpURLConnection createHttpUrlConnection() throws IOException {
         //添加路径请求参数
-        if (!requestMeta.parameters.isEmpty()) {
+        if (!requestMeta.parameterMap.isEmpty()) {
             StringBuilder parameterBuilder = getBuilder();
-            Set<Map.Entry<String, String>> entrySet = requestMeta.parameters.entrySet();
+            Set<Map.Entry<String, String>> entrySet = requestMeta.parameterMap.entrySet();
             for (Map.Entry<String, String> entry : entrySet) {
                 String value = entry.getValue();
                 if (null != value) {
@@ -340,7 +340,7 @@ public class RequestExecutor {
         httpURLConnection.setInstanceFollowRedirects(false);
         //设置头部
         {
-            Set<Map.Entry<String, String>> entrySet = requestMeta.headers.entrySet();
+            Set<Map.Entry<String, String>> entrySet = requestMeta.headerMap.entrySet();
             for (Map.Entry<String, String> entry : entrySet) {
                 httpURLConnection.setRequestProperty(entry.getKey(), entry.getValue());
             }
@@ -480,7 +480,7 @@ public class RequestExecutor {
         HttpURLConnection httpURLConnection = responseMeta.httpURLConnection;
 
         StringBuilder contentBuilder = new StringBuilder(requestMeta.method + " " + requestMeta.url + " HTTP/1.1\n");
-        Set<Map.Entry<String, String>> requestHeaderSet = requestMeta.headers.entrySet();
+        Set<Map.Entry<String, String>> requestHeaderSet = requestMeta.headerMap.entrySet();
         for (Map.Entry<String, String> entry : requestHeaderSet) {
             contentBuilder.append(entry.getKey() + ": " + entry.getValue() + "\n");
         }

@@ -68,7 +68,7 @@ public class RequestImpl implements Request {
     @Override
     public Request basicAuth(String username, String password) {
         String encoded = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
-        requestMeta.headers.put("Authorization", "Basic " + encoded);
+        requestMeta.headerMap.put("Authorization", "Basic " + encoded);
         return this;
     }
 
@@ -80,19 +80,19 @@ public class RequestImpl implements Request {
 
     @Override
     public Request userAgent(String userAgent) {
-        requestMeta.headers.put("User-Agent", userAgent);
+        requestMeta.headerMap.put("User-Agent", userAgent);
         return this;
     }
 
     @Override
     public Request userAgent(UserAgent userAgent) {
-        requestMeta.headers.put("User-Agent", userAgent.userAgent);
+        requestMeta.headerMap.put("User-Agent", userAgent.userAgent);
         return this;
     }
 
     @Override
     public Request referrer(String referrer) {
-        requestMeta.headers.put("Referer", referrer);
+        requestMeta.headerMap.put("Referer", referrer);
         return this;
     }
 
@@ -128,13 +128,13 @@ public class RequestImpl implements Request {
 
     @Override
     public Request header(String name, String value) {
-        requestMeta.headers.put(name, value);
+        requestMeta.headerMap.put(name, value);
         return this;
     }
 
     @Override
     public Request headers(Map<String, String> headerMap) {
-        requestMeta.headers.putAll(headerMap);
+        requestMeta.headerMap.putAll(headerMap);
         return this;
     }
 
@@ -172,7 +172,7 @@ public class RequestImpl implements Request {
 
     @Override
     public Request parameter(String key, String value) {
-        requestMeta.parameters.put(key, value);
+        requestMeta.parameterMap.put(key, value);
         return this;
     }
 
