@@ -6,14 +6,17 @@ import java.io.Serializable;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 请求元数据
  */
 public class RequestMeta implements Cloneable, Serializable {
+    /**
+     * 状态行
+     */
+    public transient String statusLine;
+
     /**
      * 访问地址
      */
@@ -52,7 +55,7 @@ public class RequestMeta implements Cloneable, Serializable {
     /**
      * 头部信息
      */
-    public Map<String, String> headerMap = new LinkedHashMap<>();
+    public Map<String, List<String>> headerMap = new LinkedHashMap<>();
 
     /**
      * parameter信息
@@ -105,7 +108,7 @@ public class RequestMeta implements Cloneable, Serializable {
     public int retryTimes = 3;
 
     public RequestMeta() {
-        headerMap.put("User-Agent", Request.UserAgent.CHROME.userAgent);
-        headerMap.put("Accept-Encoding", "gzip, deflate");
+        headerMap.put("User-Agent", Arrays.asList(Request.UserAgent.CHROME.userAgent));
+        headerMap.put("Accept-Encoding", Arrays.asList("gzip, deflate"));
     }
 }

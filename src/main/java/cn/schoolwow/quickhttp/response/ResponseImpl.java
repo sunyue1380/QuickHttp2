@@ -23,6 +23,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -108,11 +109,11 @@ public class ResponseImpl implements Response {
 
     @Override
     public String header(String name) {
-        return responseMeta.headerMap.get(name);
+        return responseMeta.headerMap.get(name).get(0);
     }
 
     @Override
-    public Map<String, String> headers() {
+    public Map<String, List<String>> headers() {
         return responseMeta.headerMap;
     }
 

@@ -152,7 +152,7 @@ public interface Request extends Cloneable {
      *
      * @param headerMap 头部字段信息
      */
-    Request headers(Map<String, String> headerMap);
+    Request headers(Map<String, List<String>> headerMap);
 
     /**
      * 设置Cookie头部

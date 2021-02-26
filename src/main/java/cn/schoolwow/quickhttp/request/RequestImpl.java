@@ -14,9 +14,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -68,7 +66,7 @@ public class RequestImpl implements Request {
     @Override
     public Request basicAuth(String username, String password) {
         String encoded = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
-        requestMeta.headerMap.put("Authorization", "Basic " + encoded);
+        requestMeta.headerMap.put("Authorization", Arrays.asList("Basic " + encoded));
         return this;
     }
 
@@ -80,19 +78,19 @@ public class RequestImpl implements Request {
 
     @Override
     public Request userAgent(String userAgent) {
-        requestMeta.headerMap.put("User-Agent", userAgent);
+        requestMeta.headerMap.put("User-Agent", Arrays.asList(userAgent));
         return this;
     }
 
     @Override
     public Request userAgent(UserAgent userAgent) {
-        requestMeta.headerMap.put("User-Agent", userAgent.userAgent);
+        requestMeta.headerMap.put("User-Agent", Arrays.asList(userAgent.userAgent));
         return this;
     }
 
     @Override
     public Request referrer(String referrer) {
-        requestMeta.headerMap.put("Referer", referrer);
+        requestMeta.headerMap.put("Referer", Arrays.asList(referrer));
         return this;
     }
 
@@ -128,12 +126,15 @@ public class RequestImpl implements Request {
 
     @Override
     public Request header(String name, String value) {
-        requestMeta.headerMap.put(name, value);
+        if(!requestMeta.headerMap.containsKey(name)){
+            requestMeta.headerMap.put(name,new ArrayList<>());
+        }
+        requestMeta.headerMap.get(name).add(value);
         return this;
     }
 
     @Override
-    public Request headers(Map<String, String> headerMap) {
+    public Request headers(Map<String, List<String>> headerMap) {
         requestMeta.headerMap.putAll(headerMap);
         return this;
     }

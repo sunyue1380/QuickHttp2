@@ -5,7 +5,8 @@ import cn.schoolwow.quickhttp.document.DocumentParser;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,6 +34,11 @@ public class ResponseMeta {
     public String statusMessage;
 
     /**
+     * 状态行
+     */
+    public String statusLine;
+
+    /**
      * 编码格式
      */
     public String charset;
@@ -40,7 +46,7 @@ public class ResponseMeta {
     /**
      * 头部信息
      */
-    public Map<String, String> headerMap = new HashMap<>();
+    public Map<String, List<String>> headerMap = new LinkedHashMap<>();
 
     /**
      * 输入流

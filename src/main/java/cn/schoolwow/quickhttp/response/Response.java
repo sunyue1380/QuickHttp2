@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 public interface Response {
@@ -74,7 +75,7 @@ public interface Response {
     /**
      * 获取所有Header信息
      */
-    Map<String, String> headers();
+    Map<String, List<String>> headers();
 
     /**
      * 是否存在指定Cookie

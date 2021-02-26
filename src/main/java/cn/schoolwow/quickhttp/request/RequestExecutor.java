@@ -14,19 +14,18 @@ import cn.schoolwow.quickhttp.response.SpeedLimitInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import sun.net.www.MessageHeader;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.*;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
@@ -150,22 +149,58 @@ public class RequestExecutor {
             }
         }
         //获取顶级域
-        responseMeta.topHost = responseMeta.httpURLConnection.getURL().getHost();
+        responseMeta.topHost = httpURLConnection.getURL().getHost();
         String substring = responseMeta.topHost.substring(0,responseMeta.topHost.lastIndexOf("."));
         if(substring.contains(".")){
             responseMeta.topHost = responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
         }
-        //提取头部信息
-        {
-            Map<String, List<String>> headerFields = httpURLConnection.getHeaderFields();
-            Set<String> keySet = headerFields.keySet();
-            for (String key : keySet) {
-                if (null == key) {
-                    continue;
+        //提取请求头信息
+        try {
+            try {
+                Field requestsField = httpURLConnection.getClass().getDeclaredField("requests");
+                requestsField.setAccessible(true);
+                MessageHeader messageHeader = (MessageHeader) requestsField.get(httpURLConnection);
+                Map<String,List<String>> headerMap = messageHeader.getHeaders();
+                Set<Map.Entry<String,List<String>>> entrySet = headerMap.entrySet();
+                requestMeta.headerMap.clear();
+                for(Map.Entry<String,List<String>> entry:entrySet){
+                    if(null==entry.getValue().get(0)){
+                        requestMeta.statusLine = entry.getKey();
+                        continue;
+                    }
+                    requestMeta.headerMap.put(entry.getKey(),entry.getValue());
                 }
-                String value = httpURLConnection.getHeaderField(key);
-                value = new String(value.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-                responseMeta.headerMap.put(key, value);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        //提取返回头信息
+        {
+            try {
+                Field field = httpURLConnection.getClass().getDeclaredField("responses");
+                field.setAccessible(true);
+                MessageHeader messageHeader = (MessageHeader) field.get(httpURLConnection);
+                Map<String,List<String>> headerMap = messageHeader.getHeaders();
+                Set<Map.Entry<String,List<String>>> entrySet = headerMap.entrySet();
+                for(Map.Entry<String,List<String>> entry:entrySet){
+                    if(null==entry.getKey()){
+                        responseMeta.statusLine = entry.getValue().get(0);
+                        continue;
+                    }
+                    List<String> values = entry.getValue();
+                    List<String> newValues = new ArrayList<>(values.size());
+                    for(int i=0;i<values.size();i++){
+                        if(null==values.get(i)){
+                            continue;
+                        }
+                        newValues.add(new String(values.get(i).getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
+                    }
+                    responseMeta.headerMap.put(entry.getKey(),newValues);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
             }
         }
         //提取body信息
@@ -340,9 +375,11 @@ public class RequestExecutor {
         httpURLConnection.setInstanceFollowRedirects(false);
         //设置头部
         {
-            Set<Map.Entry<String, String>> entrySet = requestMeta.headerMap.entrySet();
-            for (Map.Entry<String, String> entry : entrySet) {
-                httpURLConnection.setRequestProperty(entry.getKey(), entry.getValue());
+            Set<Map.Entry<String, List<String>>> entrySet = requestMeta.headerMap.entrySet();
+            for(Map.Entry<String,List<String>> entry:entrySet){
+                for(String value:entry.getValue()){
+                    httpURLConnection.addRequestProperty(entry.getKey(), value);
+                }
             }
         }
         //执行请求
@@ -479,24 +516,21 @@ public class RequestExecutor {
         ResponseMeta responseMeta = response.responseMeta();
         HttpURLConnection httpURLConnection = responseMeta.httpURLConnection;
 
-        StringBuilder contentBuilder = new StringBuilder(requestMeta.method + " " + requestMeta.url + " HTTP/1.1\n");
-        Set<Map.Entry<String, String>> requestHeaderSet = requestMeta.headerMap.entrySet();
-        for (Map.Entry<String, String> entry : requestHeaderSet) {
-            contentBuilder.append(entry.getKey() + ": " + entry.getValue() + "\n");
-        }
-        if (null != requestMeta.contentType && requestMeta.contentType.isEmpty()) {
-            contentBuilder.append("Content-Type: " + requestMeta.contentType + "\n");
-        }
-        String cookie = responseMeta.httpURLConnection.getRequestProperty("Cookie");
-        if (null != cookie) {
-            contentBuilder.append("Cookie: " + cookie + "\n");
+        StringBuilder contentBuilder = new StringBuilder(requestMeta.statusLine + "\n");
+        Set<Map.Entry<String, List<String>>> requestHeaderSet = requestMeta.headerMap.entrySet();
+        for (Map.Entry<String, List<String>> entry : requestHeaderSet) {
+            for(String value : entry.getValue()){
+                contentBuilder.append(entry.getKey() + ": " + value + "\n");
+            }
         }
         contentBuilder.append("\n" + MDC.get("body") + "\n\n");
 
-        contentBuilder.append("HTTP/1.1 " + responseMeta.statusCode + " " + responseMeta.statusMessage + "\n");
-        Set<Map.Entry<String, String>> responseHeaderSet = responseMeta.headerMap.entrySet();
-        for (Map.Entry<String, String> entry : responseHeaderSet) {
-            contentBuilder.append(entry.getKey() + ": " + entry.getValue() + "\n");
+        contentBuilder.append(responseMeta.statusLine + "\n");
+        Set<Map.Entry<String, List<String>>> responseHeaderSet = responseMeta.headerMap.entrySet();
+        for (Map.Entry<String, List<String>> entry : responseHeaderSet) {
+            for(String value : entry.getValue()){
+                contentBuilder.append(entry.getKey() + ": " + value + "\n");
+            }
         }
         if (null != httpURLConnection.getContentType()) {
             if (httpURLConnection.getContentType().contains("application/json")
