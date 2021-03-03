@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import sun.net.www.MessageHeader;
+import sun.net.www.protocol.https.DelegateHttpsURLConnection;
+import sun.net.www.protocol.https.HttpsURLConnectionImpl;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
@@ -155,12 +157,26 @@ public class RequestExecutor {
             responseMeta.topHost = responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
         }
         //提取请求头信息
+        MessageHeader requestsMessageHeader = null;
+        MessageHeader responsesMessageHeader = null;
         try {
-            try {
-                Field requestsField = httpURLConnection.getClass().getDeclaredField("requests");
-                requestsField.setAccessible(true);
-                MessageHeader messageHeader = (MessageHeader) requestsField.get(httpURLConnection);
-                Map<String,List<String>> headerMap = messageHeader.getHeaders();
+            Field requestsMessageHeaderField = sun.net.www.protocol.http.HttpURLConnection.class.getDeclaredField("requests");
+            requestsMessageHeaderField.setAccessible(true);
+            Field responsesMessageHeaderField = sun.net.www.protocol.http.HttpURLConnection.class.getDeclaredField("responses");
+            responsesMessageHeaderField.setAccessible(true);
+            if(httpURLConnection instanceof HttpsURLConnection){
+                Field delegateField = HttpsURLConnectionImpl.class.getDeclaredField("delegate");
+                delegateField.setAccessible(true);
+                DelegateHttpsURLConnection delegateHttpsURLConnection = (DelegateHttpsURLConnection) delegateField.get(httpURLConnection);
+                requestsMessageHeader = (MessageHeader) requestsMessageHeaderField.get(delegateHttpsURLConnection);
+                responsesMessageHeader = (MessageHeader) responsesMessageHeaderField.get(delegateHttpsURLConnection);
+            }else {
+                requestsMessageHeader = (MessageHeader) requestsMessageHeaderField.get(httpURLConnection);
+                responsesMessageHeader = (MessageHeader) responsesMessageHeaderField.get(httpURLConnection);
+            }
+            //添加请求头部
+            {
+                Map<String,List<String>> headerMap = requestsMessageHeader.getHeaders();
                 Set<Map.Entry<String,List<String>>> entrySet = headerMap.entrySet();
                 requestMeta.headerMap.clear();
                 for(Map.Entry<String,List<String>> entry:entrySet){
@@ -170,19 +186,10 @@ public class RequestExecutor {
                     }
                     requestMeta.headerMap.put(entry.getKey(),entry.getValue());
                 }
-            }catch (Exception e){
-                e.printStackTrace();
             }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        //提取返回头信息
-        {
-            try {
-                Field field = httpURLConnection.getClass().getDeclaredField("responses");
-                field.setAccessible(true);
-                MessageHeader messageHeader = (MessageHeader) field.get(httpURLConnection);
-                Map<String,List<String>> headerMap = messageHeader.getHeaders();
+            //添加响应头部
+            {
+                Map<String,List<String>> headerMap = responsesMessageHeader.getHeaders();
                 Set<Map.Entry<String,List<String>>> entrySet = headerMap.entrySet();
                 for(Map.Entry<String,List<String>> entry:entrySet){
                     if(null==entry.getKey()){
@@ -199,9 +206,9 @@ public class RequestExecutor {
                     }
                     responseMeta.headerMap.put(entry.getKey(),newValues);
                 }
-            }catch (Exception e){
-                e.printStackTrace();
             }
+        }catch (Exception e){
+            e.printStackTrace();
         }
         //提取body信息
         {
