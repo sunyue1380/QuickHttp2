@@ -13,7 +13,7 @@ public class AbstractElement implements Element {
     /***attribute拼接字符串*/
     private static ThreadLocal<StringBuilder> attributeBuilderThreadLocal = new ThreadLocal<>();
 
-    static {
+    {
         htmlBuilderThreadLocal.set(new StringBuilder());
         attributeBuilderThreadLocal.set(new StringBuilder());
     }
