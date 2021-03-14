@@ -380,6 +380,12 @@ public class RequestExecutor {
         httpURLConnection.setConnectTimeout(requestMeta.connectTimeoutMillis);
         httpURLConnection.setReadTimeout(requestMeta.readTimeoutMillis);
         httpURLConnection.setInstanceFollowRedirects(false);
+        try {
+            Map<String,List<String>> cookieHeaderMap = clientConfig.cookieManager.get(requestMeta.url.toURI(), requestMeta.headerMap);
+            requestMeta.headerMap.putAll(cookieHeaderMap);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
         //设置头部
         {
             Set<Map.Entry<String, List<String>>> entrySet = requestMeta.headerMap.entrySet();
@@ -426,11 +432,6 @@ public class RequestExecutor {
             }
             if (null != requestMeta.contentType && requestMeta.contentType.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", requestMeta.contentType);
-            }
-            try {
-                clientConfig.cookieManager.get(requestMeta.url.toURI(), httpURLConnection.getHeaderFields());
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
             }
             //开始正式写入数据
             httpURLConnection.setDoOutput(true);

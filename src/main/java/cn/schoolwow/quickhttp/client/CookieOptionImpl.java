@@ -75,7 +75,7 @@ public class CookieOptionImpl implements CookieOption {
             int startIndex = token.indexOf("=");
             String name = token.substring(0, startIndex).trim();
             String value = token.substring(startIndex + 1).trim();
-            addCookie(name, value, domain);
+            addCookie(domain, name, value);
         }
     }
 
