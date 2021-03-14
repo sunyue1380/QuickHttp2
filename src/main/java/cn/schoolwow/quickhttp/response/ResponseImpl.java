@@ -104,7 +104,7 @@ public class ResponseImpl implements Response {
 
     @Override
     public boolean hasHeader(String name, String value) {
-        return hasHeader(name) && responseMeta.headerMap.get(name).equals(value);
+        return hasHeader(name) && responseMeta.headerMap.get(name).get(0).equals(value);
     }
 
     @Override
