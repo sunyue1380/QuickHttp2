@@ -121,7 +121,7 @@ public class HTMLTokenParserTest {
 
     @Test
     public void testUnclosedNode2() {
-        String html = "<ul><li><a></a><li><a></a><p></p>";
+        String html = "<div><a><font>又拍云</font></a><a>黑ICP备09023260号</a></span></div>";
         List<HTMLToken> htmlTokenList = HTMLParser.parse(html);
         Element root = HTMLTokenParser.parse(htmlTokenList);
         Assert.assertEquals("<div><a><font>又拍云</font></a><a>黑ICP备09023260号</a></div>", root.outerHtml());
