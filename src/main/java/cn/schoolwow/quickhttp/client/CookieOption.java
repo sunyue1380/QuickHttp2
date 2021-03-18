@@ -55,10 +55,29 @@ public interface CookieOption {
      * 添加Cookie
      *
      * @param domain 域名
+     * @param path 路径
+     * @param cookie Cookie字段
+     */
+    void addCookieString(String domain, String path, String cookie);
+
+    /**
+     * 添加Cookie
+     *
+     * @param domain 域名
      * @param name   cookie键
      * @param value  cookie值
      */
     void addCookie(String domain, String name, String value);
+
+    /**
+     * 添加Cookie
+     *
+     * @param domain 域名
+     * @param path 路径
+     * @param name   cookie键
+     * @param value  cookie值
+     */
+    void addCookie(String domain, String path, String name, String value);
 
     /**
      * 添加Cookie

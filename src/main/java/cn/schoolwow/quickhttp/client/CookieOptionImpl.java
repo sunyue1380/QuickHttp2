@@ -66,6 +66,11 @@ public class CookieOptionImpl implements CookieOption {
 
     @Override
     public void addCookieString(String domain, String cookie) {
+        addCookieString(domain,"/",cookie);
+    }
+
+    @Override
+    public void addCookieString(String domain, String path, String cookie) {
         if (null == cookie || cookie.isEmpty()) {
             return;
         }
@@ -75,16 +80,21 @@ public class CookieOptionImpl implements CookieOption {
             int startIndex = token.indexOf("=");
             String name = token.substring(0, startIndex).trim();
             String value = token.substring(startIndex + 1).trim();
-            addCookie(domain, name, value);
+            addCookie(domain, path, name, value);
         }
     }
 
     @Override
     public void addCookie(String domain, String name, String value) {
+        addCookie(domain,"/",name,value);
+    }
+
+    @Override
+    public void addCookie(String domain, String path, String name, String value) {
         HttpCookie httpCookie = new HttpCookie(name, value);
         httpCookie.setMaxAge(3600000);
         httpCookie.setDomain(domain);
-        httpCookie.setPath("/");
+        httpCookie.setPath(path);
         httpCookie.setVersion(0);
         httpCookie.setDiscard(false);
         addCookie(httpCookie);
