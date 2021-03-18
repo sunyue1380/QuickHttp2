@@ -1,6 +1,8 @@
 package cn.schoolwow.quickhttp.client;
 
-import java.net.*;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -16,10 +18,35 @@ public class CookieOptionImpl implements CookieOption {
     }
 
     @Override
+    public boolean hasDomainCookie(String domain) {
+        List<HttpCookie> httpCookieListStore = cookieManager.getCookieStore().getCookies();
+        for (HttpCookie httpCookie : httpCookieListStore) {
+            if (httpCookie.getDomain().contains(domain)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public boolean hasCookie(String domain, String name) {
         List<HttpCookie> httpCookieListStore = cookieManager.getCookieStore().getCookies();
         for (HttpCookie httpCookie : httpCookieListStore) {
             if (httpCookie.getDomain().contains(domain) && httpCookie.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean hasCookie(String domain, String name, String value) {
+        List<HttpCookie> httpCookieListStore = cookieManager.getCookieStore().getCookies();
+        for (HttpCookie httpCookie : httpCookieListStore) {
+            if (httpCookie.getDomain().contains(domain)
+                    && httpCookie.getName().equals(name)
+                    && httpCookie.getValue().equals(value)
+            ) {
                 return true;
             }
         }
@@ -102,17 +129,20 @@ public class CookieOptionImpl implements CookieOption {
 
     @Override
     public void addCookie(HttpCookie httpCookie) {
-        if (!httpCookie.getDomain().startsWith(".")) {
-            httpCookie.setDomain("." + httpCookie.getDomain());
+        String domain = httpCookie.getDomain();
+        if(null==domain||domain.isEmpty()){
+            throw new IllegalArgumentException("cookie的domain属性不能为空!");
+        }
+        if (domain.startsWith(".")) {
+            httpCookie.setDomain("." + domain);
+        }
+        if(null==httpCookie.getPath()||httpCookie.getPath().isEmpty()){
+            httpCookie.setPath("/");
         }
         if (httpCookie.getMaxAge() <= 0) {
             httpCookie.setMaxAge(3600);
         }
-        try {
-            cookieManager.getCookieStore().add(new URI(httpCookie.getDomain()), httpCookie);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        cookieManager.getCookieStore().add(null, httpCookie);
     }
 
     @Override
@@ -124,17 +154,21 @@ public class CookieOptionImpl implements CookieOption {
 
     @Override
     public void removeCookie(String domain) {
-        cookieManager.getCookieStore().getCookies().removeIf(httpCookie -> httpCookie.getDomain().contains(domain));
+        List<HttpCookie> httpCookieList = getCookieList(domain);
+        for(HttpCookie httpCookie:httpCookieList){
+            cookieManager.getCookieStore().remove(null,httpCookie);
+        }
     }
 
     @Override
     public void removeCookie(String domain, String name) {
-        cookieManager.getCookieStore().getCookies().removeIf(httpCookie -> httpCookie.getDomain().contains(domain) && httpCookie.getName().equals(name));
+        HttpCookie httpCookie = getCookie(domain,name);
+        cookieManager.getCookieStore().remove(null,httpCookie);
     }
 
     @Override
     public void removeCookie(HttpCookie httpCookie) {
-        cookieManager.getCookieStore().getCookies().removeIf(httpCookie1 -> httpCookie1 == httpCookie);
+        cookieManager.getCookieStore().remove(null,httpCookie);
     }
 
     @Override

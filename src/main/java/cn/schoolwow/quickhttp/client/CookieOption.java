@@ -10,12 +10,27 @@ import java.util.List;
  */
 public interface CookieOption {
     /**
+     * 指定domain下是否存在cookie
+     *
+     * @param domain 域名
+     */
+    boolean hasDomainCookie(String domain);
+
+    /**
      * cookie是否存在
      *
      * @param domain 域名
      * @param name   cookie名称
      */
     boolean hasCookie(String domain, String name);
+
+    /**
+     * cookie是否存在
+     *
+     * @param domain 域名
+     * @param name   cookie名称
+     */
+    boolean hasCookie(String domain, String name, String value);
 
     /**
      * 获取指定域名下Cookie头部
