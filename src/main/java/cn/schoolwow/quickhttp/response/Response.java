@@ -88,7 +88,7 @@ public interface Response {
      * @param name cookie名称
      * @param value cookie值
      * */
-    boolean hasCookieWithValue(String name, String value);
+    boolean hasCookie(String name, String value);
 
     /**
      * 设置最大下载速率(kb/s)

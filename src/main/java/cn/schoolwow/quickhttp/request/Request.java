@@ -140,12 +140,26 @@ public interface Request extends Cloneable {
     Request boundary(String boundary);
 
     /**
+     * 是否允许服务端压缩
+     * @param acceptEncoding 是否允许服务器开启文件压缩,默认允许
+     */
+    Request acceptEncoding(boolean acceptEncoding);
+
+    /**
      * 设置头部字段信息
      *
      * @param name  头部字段名称
      * @param value 头部字段值
      */
-    Request header(String name, String value);
+    Request addHeader(String name, String value);
+
+    /**
+     * 设置头部字段信息
+     *
+     * @param name  头部字段名称
+     * @param value 头部字段值
+     */
+    Request setHeader(String name, String value);
 
     /**
      * 设置头部字段信息

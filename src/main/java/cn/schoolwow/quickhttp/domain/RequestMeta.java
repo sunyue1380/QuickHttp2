@@ -113,7 +113,7 @@ public class RequestMeta implements Cloneable, Serializable {
     public transient String bodyLog;
 
     public RequestMeta() {
-        headerMap.put("User-Agent", Arrays.asList(Request.UserAgent.CHROME.userAgent));
-        headerMap.put("Accept-Encoding", Arrays.asList("gzip, deflate"));
+        headerMap.put("User-Agent", new ArrayList<>(Arrays.asList(Request.UserAgent.CHROME.userAgent)));
+        headerMap.put("Accept-Encoding", new ArrayList<>(Arrays.asList("gzip, deflate")));
     }
 }

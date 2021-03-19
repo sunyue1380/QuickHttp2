@@ -55,7 +55,7 @@ public class RequestTest {
         Response response = QuickHttp.connect("/header")
                 .userAgent("userAgent")
                 .referrer("referer")
-                .header("customerHeader","customerValue")
+                .setHeader("customerHeader","customerValue")
                 .ajax()
                 .ranges(0,100)
                 .execute();
@@ -132,7 +132,7 @@ public class RequestTest {
     @Test
     public void cloneTest() throws IOException {
         Request request = QuickHttp.connect("/clone")
-                .header("clone","value");
+                .setHeader("clone","value");
         Response response = request.clone()
                 .ranges(0,100)
                 .execute();

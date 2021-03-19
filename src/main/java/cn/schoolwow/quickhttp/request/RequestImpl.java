@@ -67,7 +67,7 @@ public class RequestImpl implements Request {
     @Override
     public Request basicAuth(String username, String password) {
         String encoded = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(Charset.forName(requestMeta.charset)));
-        requestMeta.headerMap.put("Authorization", Arrays.asList("Basic " + encoded));
+        requestMeta.headerMap.put("Authorization", new ArrayList<>(Arrays.asList("Basic " + encoded)));
         return this;
     }
 
@@ -79,19 +79,19 @@ public class RequestImpl implements Request {
 
     @Override
     public Request userAgent(String userAgent) {
-        requestMeta.headerMap.put("User-Agent", Arrays.asList(userAgent));
+        requestMeta.headerMap.put("User-Agent", new ArrayList<>(Arrays.asList(userAgent)));
         return this;
     }
 
     @Override
     public Request userAgent(UserAgent userAgent) {
-        requestMeta.headerMap.put("User-Agent", Arrays.asList(userAgent.userAgent));
+        requestMeta.headerMap.put("User-Agent", new ArrayList<>(Arrays.asList(userAgent.userAgent)));
         return this;
     }
 
     @Override
     public Request referrer(String referrer) {
-        requestMeta.headerMap.put("Referer", Arrays.asList(referrer));
+        requestMeta.headerMap.put("Referer", new ArrayList<>(Arrays.asList(referrer)));
         return this;
     }
 
@@ -110,13 +110,13 @@ public class RequestImpl implements Request {
     @Override
     public Request ajax() {
         URL url = requestMeta.url;
-        return header("X-Requested-With", "XMLHttpRequest")
-                .header("Origin", url.getProtocol() + "://" + url.getHost());
+        return setHeader("X-Requested-With", "XMLHttpRequest")
+                .setHeader("Origin", url.getProtocol() + "://" + url.getHost());
     }
 
     @Override
     public Request ranges(long start, long end) {
-        return header("Range", "bytes=" + start + "-" + (end > 0 ? end : ""));
+        return setHeader("Range", "bytes=" + start + "-" + (end > 0 ? end : ""));
     }
 
     @Override
@@ -126,11 +126,25 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public Request header(String name, String value) {
+    public Request acceptEncoding(boolean acceptEncoding) {
+        if(!acceptEncoding){
+            requestMeta.headerMap.remove("Accept-Encoding");
+        }
+        return this;
+    }
+
+    @Override
+    public Request addHeader(String name, String value) {
         if(!requestMeta.headerMap.containsKey(name)){
             requestMeta.headerMap.put(name,new ArrayList<>());
         }
         requestMeta.headerMap.get(name).add(value);
+        return this;
+    }
+
+    @Override
+    public Request setHeader(String name, String value) {
+        requestMeta.headerMap.put(name,new ArrayList<>(Arrays.asList(value)));
         return this;
     }
 

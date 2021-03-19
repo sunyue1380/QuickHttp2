@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -80,8 +81,9 @@ public class ResponseImpl implements Response {
             fileName = contentDisposition.substring(contentDisposition.indexOf("filename*=") + "filename*=".length());
             String charset = fileName.substring(0, fileName.indexOf("''")).replace("\"", "");
             fileName = fileName.substring(fileName.indexOf("''") + 2).replace("\"", "");
+            fileName = new String(fileName.getBytes(StandardCharsets.UTF_8), Charset.forName(charset));
             try {
-                fileName = new String(fileName.getBytes(StandardCharsets.UTF_8), charset);
+                fileName = URLDecoder.decode(fileName,charset);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
@@ -123,7 +125,7 @@ public class ResponseImpl implements Response {
     }
 
     @Override
-    public boolean hasCookieWithValue(String name, String value) {
+    public boolean hasCookie(String name, String value) {
         HttpCookie httpCookie = clientConfig.cookieOption.getCookie(responseMeta.topHost,name);
         return null!=httpCookie&&httpCookie.getValue().equals(value);
     }
@@ -228,11 +230,13 @@ public class ResponseImpl implements Response {
                 }
             }
         }
-        if (contentLength() > 0 && !responseMeta.headerMap.containsKey("Content-Encoding")) {
+        if (contentLength() > 0) {
             //检查是否下载成功
             long expectFileSize = fileSize + contentLength();
             if (Files.notExists(file) || Files.size(file) != expectFileSize) {
                 logger.warn("[文件下载失败]预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
+            }else{
+                responseMeta.body = Files.readAllBytes(file);
             }
         }
     }
