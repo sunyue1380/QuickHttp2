@@ -54,6 +54,11 @@ public interface Response {
     boolean acceptRanges();
 
     /**
+     * 获取contentEncoding头部信息,若不存在则返回null
+     */
+    String contentEncoding();
+
+    /**
      * 是否有该Header
      * @param name 头部名称
      */
@@ -70,7 +75,7 @@ public interface Response {
      * 获取头部信息
      * @param name 头部名称
      */
-    String header(String name);
+    List<String> header(String name);
 
     /**
      * 获取所有Header信息

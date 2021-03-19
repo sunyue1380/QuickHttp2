@@ -100,6 +100,12 @@ public class ResponseImpl implements Response {
     }
 
     @Override
+    public String contentEncoding() {
+        List<String> values = header("Content-Encoding");
+        return null==values?null:values.get(0);
+    }
+
+    @Override
     public boolean hasHeader(String name) {
         return responseMeta.headerMap.containsKey(name);
     }
@@ -110,8 +116,8 @@ public class ResponseImpl implements Response {
     }
 
     @Override
-    public String header(String name) {
-        return responseMeta.headerMap.get(name).get(0);
+    public List<String> header(String name) {
+        return responseMeta.headerMap.get(name);
     }
 
     @Override
@@ -233,7 +239,7 @@ public class ResponseImpl implements Response {
         if (contentLength() > 0) {
             //检查是否下载成功
             long expectFileSize = fileSize + contentLength();
-            if (Files.notExists(file) || Files.size(file) != expectFileSize) {
+            if (!responseMeta.headerMap.containsKey("Content-Encoding")&&(Files.notExists(file) || Files.size(file) != expectFileSize)) {
                 logger.warn("[文件下载失败]预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
             }else{
                 responseMeta.body = Files.readAllBytes(file);
