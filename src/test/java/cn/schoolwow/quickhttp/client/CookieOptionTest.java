@@ -46,11 +46,6 @@ public class CookieOptionTest {
             Assert.assertTrue(cookieOption.hasCookie(domain,"addCookiePathString2"));
             Assert.assertTrue(cookieOption.hasCookie(domain,"addCookiePathString2","value"));
         }
-        {
-            if(cookieOption.clearCookieList()){
-                Assert.assertEquals(0,cookieOption.getCookieList().size());
-            }
-        }
     }
 
     @Test
@@ -80,6 +75,11 @@ public class CookieOptionTest {
             Assert.assertTrue(cookieOption.hasCookie(domain,"addCookie","value"));
             cookieOption.removeCookie(domain,"addCookie");
             Assert.assertFalse(cookieOption.hasCookie(domain,"addCookie","value"));
+        }
+        {
+            if(cookieOption.clearCookieList()){
+                Assert.assertEquals(0,cookieOption.getCookieList().size());
+            }
         }
     }
 }

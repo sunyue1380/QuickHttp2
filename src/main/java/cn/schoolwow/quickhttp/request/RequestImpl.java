@@ -12,6 +12,7 @@ import java.net.HttpCookie;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -65,7 +66,7 @@ public class RequestImpl implements Request {
 
     @Override
     public Request basicAuth(String username, String password) {
-        String encoded = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+        String encoded = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(Charset.forName(requestMeta.charset)));
         requestMeta.headerMap.put("Authorization", Arrays.asList("Basic " + encoded));
         return this;
     }
@@ -143,22 +144,25 @@ public class RequestImpl implements Request {
     public Request cookie(String name, String value) {
         HttpCookie httpCookie = new HttpCookie(name,value);
         httpCookie.setMaxAge(3600000);
-        httpCookie.setDomain("."+requestMeta.url.getHost());
         httpCookie.setPath("/");
-        httpCookie.setVersion(0);
-        httpCookie.setDiscard(false);
+        cookie(httpCookie);
         clientConfig.cookieOption.addCookie(httpCookie);
         return this;
     }
 
     @Override
     public Request cookie(String cookie) {
-        clientConfig.cookieOption.addCookieString("."+requestMeta.url.getHost(),cookie);
+        clientConfig.cookieOption.addCookieString(requestMeta.url.getHost(),cookie);
         return this;
     }
 
     @Override
     public Request cookie(HttpCookie httpCookie) {
+        if(null==httpCookie.getDomain()||httpCookie.getDomain().isEmpty()){
+            httpCookie.setDomain(requestMeta.url.getHost());
+        }
+        httpCookie.setVersion(0);
+        httpCookie.setDiscard(false);
         clientConfig.cookieOption.addCookie(httpCookie);
         return this;
     }
@@ -197,19 +201,19 @@ public class RequestImpl implements Request {
 
     @Override
     public Request requestBody(String body) {
-        requestMeta.requestBody = body.getBytes();
+        requestMeta.requestBody = body.getBytes(Charset.forName(requestMeta.charset));
         return this;
     }
 
     @Override
     public Request requestBody(JSONObject body) {
-        requestMeta.requestBody = body.toJSONString().getBytes();
+        requestMeta.requestBody = body.toJSONString().getBytes(Charset.forName(requestMeta.charset));
         return this;
     }
 
     @Override
     public Request requestBody(JSONArray body) {
-        requestMeta.requestBody = body.toJSONString().getBytes();
+        requestMeta.requestBody = body.toJSONString().getBytes(Charset.forName(requestMeta.charset));
         return this;
     }
 

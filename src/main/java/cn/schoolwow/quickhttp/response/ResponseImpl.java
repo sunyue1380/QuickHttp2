@@ -16,11 +16,11 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.EnumSet;
 import java.util.List;
@@ -81,7 +81,7 @@ public class ResponseImpl implements Response {
             String charset = fileName.substring(0, fileName.indexOf("''")).replace("\"", "");
             fileName = fileName.substring(fileName.indexOf("''") + 2).replace("\"", "");
             try {
-                fileName = new String(fileName.getBytes("UTF-8"), charset);
+                fileName = new String(fileName.getBytes(StandardCharsets.UTF_8), charset);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
@@ -140,7 +140,7 @@ public class ResponseImpl implements Response {
         if (null == responseMeta.body) {
             bodyAsBytes();
         }
-        return Charset.forName(responseMeta.charset).decode(ByteBuffer.wrap(responseMeta.body)).toString();
+        return new String(responseMeta.body,Charset.forName(responseMeta.charset));
     }
 
     @Override

@@ -13,7 +13,6 @@ import cn.schoolwow.quickhttp.response.ResponseImpl;
 import cn.schoolwow.quickhttp.response.SpeedLimitInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import sun.net.www.MessageHeader;
 import sun.net.www.protocol.https.DelegateHttpsURLConnection;
 import sun.net.www.protocol.https.HttpsURLConnectionImpl;
@@ -24,6 +23,7 @@ import java.lang.reflect.Field;
 import java.net.*;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,6 +52,8 @@ public class RequestExecutor {
         this.request = request;
         this.requestMeta = request.requestMeta();
         this.clientConfig = clientConfig;
+        StringBuilder builder = new StringBuilder();
+        builderThreadLocal.set(builder);
     }
 
     /**
@@ -145,11 +147,6 @@ public class RequestExecutor {
         if (null == responseMeta.statusMessage) {
             responseMeta.statusMessage = "";
         }
-        if (!requestMeta.ignoreHttpErrors) {
-            if (responseMeta.statusCode < 200 || responseMeta.statusCode >= 400) {
-                throw new IOException("http状态异常!状态码:" + responseMeta.statusCode + ",地址:" + requestMeta.url);
-            }
-        }
         //获取顶级域
         responseMeta.topHost = httpURLConnection.getURL().getHost();
         String substring = responseMeta.topHost.substring(0,responseMeta.topHost.lastIndexOf("."));
@@ -231,11 +228,20 @@ public class RequestExecutor {
         }
         getCharset();
         try {
-            clientConfig.cookieManager.put(httpURLConnection.getURL().toURI(), httpURLConnection.getHeaderFields());
+            URI uri = httpURLConnection.getURL().toURI();
+            clientConfig.cookieManager.put(uri, httpURLConnection.getHeaderFields());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         Response response = new ResponseImpl(requestMeta, responseMeta,clientConfig);
+        if (!requestMeta.ignoreHttpErrors) {
+            if (responseMeta.statusCode < 200 || responseMeta.statusCode >= 400) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[请求与响应]\n{}", getRequestAndResponseLog(requestMeta, response));
+                }
+                throw new IOException("http状态异常!状态码:" + responseMeta.statusCode + ",地址:" + requestMeta.url);
+            }
+        }
         if (logger.isDebugEnabled()) {
             logger.debug("[请求与响应]\n{}", getRequestAndResponseLog(requestMeta, response));
         }
@@ -349,7 +355,8 @@ public class RequestExecutor {
     private HttpURLConnection createHttpUrlConnection() throws IOException {
         //添加路径请求参数
         if (!requestMeta.parameterMap.isEmpty()) {
-            StringBuilder parameterBuilder = getBuilder();
+            StringBuilder parameterBuilder = builderThreadLocal.get();
+            parameterBuilder.setLength(0);
             Set<Map.Entry<String, String>> entrySet = requestMeta.parameterMap.entrySet();
             for (Map.Entry<String, String> entry : entrySet) {
                 String value = entry.getValue();
@@ -382,7 +389,7 @@ public class RequestExecutor {
         httpURLConnection.setInstanceFollowRedirects(false);
         try {
             Map<String,List<String>> cookieHeaderMap = clientConfig.cookieManager.get(requestMeta.url.toURI(), requestMeta.headerMap);
-            requestMeta.headerMap.putAll(cookieHeaderMap);
+            logger.trace("[设置Cookie头部]{}",cookieHeaderMap);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -397,6 +404,8 @@ public class RequestExecutor {
         }
         //执行请求
         httpURLConnection.setDoInput(true);
+        StringBuilder builder = builderThreadLocal.get();
+        builder.setLength(0);
         if (requestMeta.method.hasBody() && (!requestMeta.dataFileMap.isEmpty() || null != requestMeta.requestBody || !requestMeta.dataMap.isEmpty())) {
             //优先级 dataFile > requestBody > dataMap
             if (Request.ContentType.MULTIPART_FORMDATA.equals(requestMeta.userContentType) || !requestMeta.dataFileMap.isEmpty()) {
@@ -405,17 +414,22 @@ public class RequestExecutor {
                 }
                 httpURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + requestMeta.boundary);
                 httpURLConnection.setChunkedStreamingMode(0);
-                MDC.put("body", requestMeta.dataFileMap.toString());
+                if(!requestMeta.dataFileMap.isEmpty()){
+                    builder.append("[MultipartFile]" + requestMeta.dataFileMap);
+                }
+                if(!requestMeta.dataMap.isEmpty()){
+                    builder.append("[Multipart]" + requestMeta.dataMap);
+                }
             } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || (requestMeta.requestBody != null && requestMeta.requestBody.length > 0)) {
                 httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType) + "; charset=" + requestMeta.charset + ";");
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
-                if(null!=requestMeta.userContentType&&requestMeta.userContentType.equals("application/json")){
-                    MDC.put("body", new String(requestMeta.requestBody,requestMeta.charset));
+                if(Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType)){
+                    builder.append(new String(requestMeta.requestBody,requestMeta.charset));
                 }
             } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + requestMeta.charset);
                 if (!requestMeta.dataMap.isEmpty()) {
-                    StringBuilder formBuilder = getBuilder();
+                    StringBuilder formBuilder = new StringBuilder();
                     Set<Map.Entry<String, String>> entrySet = requestMeta.dataMap.entrySet();
                     for (Map.Entry<String, String> entry : entrySet) {
                         String value = entry.getValue();
@@ -425,10 +439,10 @@ public class RequestExecutor {
                         formBuilder.append(URLEncoder.encode(entry.getKey(), requestMeta.charset) + "=" + value + "&");
                     }
                     formBuilder.deleteCharAt(formBuilder.length() - 1);
-                    requestMeta.requestBody = formBuilder.toString().getBytes();
+                    requestMeta.requestBody = formBuilder.toString().getBytes(Charset.forName(requestMeta.charset));
                 }
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
-                MDC.put("body", requestMeta.dataMap.toString());
+                builder.append("[Form]"+requestMeta.dataMap.toString());
             }
             if (null != requestMeta.contentType && requestMeta.contentType.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", requestMeta.contentType);
@@ -473,6 +487,7 @@ public class RequestExecutor {
             w.flush();
             w.close();
         }
+        requestMeta.bodyLog = builder.toString();
         return httpURLConnection;
     }
 
@@ -518,12 +533,9 @@ public class RequestExecutor {
      * 获取请求和响应日志
      *
      * @param requestMeta 请求元数据
-     * @param response    响应对象
+     * @param response 响应元数据
      */
     private String getRequestAndResponseLog(RequestMeta requestMeta, Response response) throws IOException {
-        ResponseMeta responseMeta = response.responseMeta();
-        HttpURLConnection httpURLConnection = responseMeta.httpURLConnection;
-
         StringBuilder contentBuilder = new StringBuilder(requestMeta.statusLine + "\n");
         Set<Map.Entry<String, List<String>>> requestHeaderSet = requestMeta.headerMap.entrySet();
         for (Map.Entry<String, List<String>> entry : requestHeaderSet) {
@@ -531,7 +543,7 @@ public class RequestExecutor {
                 contentBuilder.append(entry.getKey() + ": " + value + "\n");
             }
         }
-        contentBuilder.append("\n" + MDC.get("body") + "\n\n");
+        contentBuilder.append("\n" + requestMeta.bodyLog + "\n\n");
 
         contentBuilder.append(responseMeta.statusLine + "\n");
         Set<Map.Entry<String, List<String>>> responseHeaderSet = responseMeta.headerMap.entrySet();
@@ -540,15 +552,15 @@ public class RequestExecutor {
                 contentBuilder.append(entry.getKey() + ": " + value + "\n");
             }
         }
-        if (null != httpURLConnection.getContentType()) {
-            if (httpURLConnection.getContentType().contains("application/json")
-                    || httpURLConnection.getContentType().contains("text/")
-                    || httpURLConnection.getContentType().contains("charset")
+        if(null!=requestMeta.contentType){
+            if (requestMeta.contentType.contains("application/json")
+                    || requestMeta.contentType.contains("text/")
+                    || requestMeta.contentType.contains("charset")
             ) {
                 contentBuilder.append("\n" + response.body());
             }
         } else {
-            contentBuilder.append("\n[" + responseMeta.httpURLConnection.getContentLength() + "]");
+            contentBuilder.append("\n[" + response.contentLength() + "]");
         }
         contentBuilder.append("\n====================================================================");
         return contentBuilder.toString();
@@ -564,15 +576,5 @@ public class RequestExecutor {
             mime.append(mimeBoundaryChars[rand.nextInt(mimeBoundaryChars.length)]);
         }
         return mime.toString();
-    }
-
-    private static StringBuilder getBuilder() {
-        StringBuilder builder = builderThreadLocal.get();
-        if (null == builder) {
-            builder = new StringBuilder();
-            builderThreadLocal.set(builder);
-        }
-        builder.setLength(0);
-        return builder;
     }
 }

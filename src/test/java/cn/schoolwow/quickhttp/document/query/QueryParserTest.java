@@ -123,17 +123,25 @@ public class QueryParserTest {
     }
 
     @Test
-    public void testCompositEvaluator() {
+    public void testCompositeEvaluator() {
         String cssQuery = "#id > div:nth-child(5)";
         Evaluator evaluator = QueryParser.parse(cssQuery);
         Assert.assertEquals(CombiningEvaluator.And.class, evaluator.getClass());
         CombiningEvaluator.And and = (CombiningEvaluator.And) evaluator;
         List<Evaluator> evaluatorList = and.evaluatorList;
-        Assert.assertEquals(Evaluator.IsNthChild.class, evaluatorList.get(0).getClass());
-        Assert.assertEquals(Evaluator.Tag.class, evaluatorList.get(1).getClass());
-        Assert.assertEquals(StructuralEvaluator.ImmediateParent.class, evaluatorList.get(2).getClass());
-        StructuralEvaluator.ImmediateParent immediateParent = (StructuralEvaluator.ImmediateParent) evaluatorList.get(2);
-        Assert.assertEquals(StructuralEvaluator.Id.class, immediateParent.evaluator.getClass());
+        Assert.assertEquals(CombiningEvaluator.And.class, evaluatorList.get(0).getClass());
+        {
+            CombiningEvaluator combiningEvaluator = (CombiningEvaluator) evaluatorList.get(0);
+            List<Evaluator> combiningEvaluatorList = combiningEvaluator.evaluatorList;
+            Assert.assertEquals(2,combiningEvaluatorList.size());
+            Assert.assertEquals(Evaluator.IsNthChild.class, combiningEvaluatorList.get(0).getClass());
+            Assert.assertEquals(Evaluator.Tag.class, combiningEvaluatorList.get(1).getClass());
+        }
+        Assert.assertEquals(StructuralEvaluator.ImmediateParent.class, evaluatorList.get(1).getClass());
+        {
+            StructuralEvaluator.ImmediateParent immediateParent = (StructuralEvaluator.ImmediateParent) evaluatorList.get(1);
+            Assert.assertEquals(StructuralEvaluator.Id.class, immediateParent.evaluator.getClass());
+        }
     }
 
     @Test
