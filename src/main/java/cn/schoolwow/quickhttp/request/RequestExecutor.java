@@ -390,12 +390,6 @@ public class RequestExecutor {
         httpURLConnection.setConnectTimeout(requestMeta.connectTimeoutMillis);
         httpURLConnection.setReadTimeout(requestMeta.readTimeoutMillis);
         httpURLConnection.setInstanceFollowRedirects(false);
-        try {
-            Map<String,List<String>> cookieHeaderMap = clientConfig.cookieManager.get(requestMeta.url.toURI(), requestMeta.headerMap);
-            logger.trace("[设置Cookie头部]{}",cookieHeaderMap);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
         //设置头部
         {
             Set<Map.Entry<String, List<String>>> entrySet = requestMeta.headerMap.entrySet();
@@ -404,6 +398,22 @@ public class RequestExecutor {
                     httpURLConnection.addRequestProperty(entry.getKey(), value);
                 }
             }
+        }
+        //设置Cookie
+        try {
+            Map<String,List<String>> cookieHeaderMap = clientConfig.cookieManager.get(requestMeta.url.toURI(), requestMeta.headerMap);
+            if(cookieHeaderMap.containsKey("Cookie")){
+                logger.trace("[设置Cookie头部]{}",cookieHeaderMap);
+                List<String> cookieList = cookieHeaderMap.get("Cookie");
+                StringBuilder builder = builderThreadLocal.get();
+                builder.setLength(0);
+                for(String cookie:cookieList){
+                    builder.append(" "+cookie+";");
+                }
+                httpURLConnection.setRequestProperty("Cookie",builder.toString());
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
         }
         //执行请求
         httpURLConnection.setDoInput(true);
