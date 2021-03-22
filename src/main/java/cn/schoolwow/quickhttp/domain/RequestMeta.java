@@ -70,7 +70,7 @@ public class RequestMeta implements Cloneable, Serializable {
     /**
      * 表单信息
      */
-    public Map<String, Path> dataFileMap = new IdentityHashMap<>();
+    public Map<String, Collection<Path>> dataFileMap = new HashMap<>();
 
     /**
      * 自定义请求体

@@ -219,7 +219,7 @@ public interface Request extends Cloneable {
      * @param key  表单请求参数键
      * @param file 上传文件
      */
-    Request data(String key, Path file);
+    Request data(String key, Path... file);
 
     /**
      * 设置表单请求参数

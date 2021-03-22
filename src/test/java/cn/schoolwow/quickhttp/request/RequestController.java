@@ -84,6 +84,13 @@ public class RequestController {
         return file.size;
     }
 
+    @RequestMapping(value = "/dataFiles",method = RequestMethod.POST)
+    public long dataFile2(
+            @RequestPart(name = "files") MultipartFile[] files
+    ) {
+        return files.length;
+    }
+
     @RequestMapping(value = "/multipart",method = RequestMethod.POST)
     public void multipart(
             @RequestPart(name = "data") String data,

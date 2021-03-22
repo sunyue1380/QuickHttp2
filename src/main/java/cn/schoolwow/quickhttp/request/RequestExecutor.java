@@ -462,19 +462,21 @@ public class RequestExecutor {
                         w.write("\r\n");
                     }
                 }
-                Set<Map.Entry<String, Path>> entrySet = requestMeta.dataFileMap.entrySet();
-                for (Map.Entry<String, Path> entry : entrySet) {
-                    Path file = entry.getValue();
-                    String name = entry.getKey().replace("\"", "%22");
+                Set<Map.Entry<String, Collection<Path>>> entrySet = requestMeta.dataFileMap.entrySet();
+                for (Map.Entry<String, Collection<Path>> entry : entrySet) {
+                    Collection<Path> pathCollection = entry.getValue();
+                    for(Path file:pathCollection){
+                        String name = entry.getKey().replace("\"", "%22");
 
-                    w.write("--" + requestMeta.boundary + "\r\n");
-                    w.write("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + file.getFileName().toString().replace("\"", "%22") + "\"\r\n");
-                    w.write("Content-Type: " + Files.probeContentType(file) + "\r\n");
-                    w.write("\r\n");
-                    w.flush();
-                    outputStream.write(Files.readAllBytes(file));
-                    outputStream.flush();
-                    w.write("\r\n");
+                        w.write("--" + requestMeta.boundary + "\r\n");
+                        w.write("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + file.getFileName().toString().replace("\"", "%22") + "\"\r\n");
+                        w.write("Content-Type: " + Files.probeContentType(file) + "\r\n");
+                        w.write("\r\n");
+                        w.flush();
+                        outputStream.write(Files.readAllBytes(file));
+                        outputStream.flush();
+                        w.write("\r\n");
+                    }
                 }
                 w.write("--" + requestMeta.boundary + "--\r\n");
             } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || requestMeta.requestBody != null && !requestMeta.requestBody.equals("")) {

@@ -110,6 +110,18 @@ public class RequestTest {
     }
 
     @Test
+    public void dataFiles() throws IOException {
+        Response response = QuickHttp.connect("/dataFiles")
+                .method(Request.Method.POST)
+                .data("files",
+                        Paths.get(System.getProperty("user.dir")+"/pom.xml"),
+                        Paths.get(System.getProperty("user.dir")+"/README.md")
+                )
+                .execute();
+        Assert.assertEquals("2",response.body());
+    }
+
+    @Test
     public void multipart() throws IOException {
         Response response = QuickHttp.connect("/multipart")
                 .method(Request.Method.POST)

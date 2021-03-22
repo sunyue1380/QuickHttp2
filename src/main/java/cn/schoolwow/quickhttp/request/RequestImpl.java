@@ -202,8 +202,11 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public Request data(String key, Path file) {
-        requestMeta.dataFileMap.put(new String(key), file);
+    public Request data(String key, Path... files) {
+        if(!requestMeta.dataFileMap.containsKey(key)){
+            requestMeta.dataFileMap.put(key,new ArrayList());
+        }
+        requestMeta.dataFileMap.get(key).addAll(Arrays.asList(files));
         return this;
     }
 
