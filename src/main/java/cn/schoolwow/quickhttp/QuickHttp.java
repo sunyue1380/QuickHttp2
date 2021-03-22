@@ -44,6 +44,13 @@ public class QuickHttp {
     }
 
     /**
+     * 获取默认的http客户端
+     */
+    public static QuickHttpClient defaultQuickHttpClient() {
+        return defaultQuickHttpClient;
+    }
+
+    /**
      * 创建http客户端
      */
     public static QuickHttpClient newQuickHttpClient() {

@@ -44,6 +44,11 @@ public class ResponseMeta {
     public String charset;
 
     /**
+     * 响应体类型
+     */
+    public String contentType;
+
+    /**
      * 头部信息
      */
     public Map<String, List<String>> headerMap = new LinkedHashMap<>();

@@ -202,6 +202,9 @@ public class RequestExecutor {
                         newValues.add(new String(values.get(i).getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
                     }
                     responseMeta.headerMap.put(entry.getKey(),newValues);
+                    if("Content-Type".equalsIgnoreCase(entry.getKey())){
+                        responseMeta.contentType = newValues.get(0);
+                    }
                 }
             }
         }catch (Exception e){
@@ -423,9 +426,7 @@ public class RequestExecutor {
             } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || (requestMeta.requestBody != null && requestMeta.requestBody.length > 0)) {
                 httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType) + "; charset=" + requestMeta.charset + ";");
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
-                if(Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType)){
-                    builder.append(new String(requestMeta.requestBody,requestMeta.charset));
-                }
+                builder.append(new String(requestMeta.requestBody,requestMeta.charset));
             } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + requestMeta.charset);
                 if (!requestMeta.dataMap.isEmpty()) {
@@ -554,10 +555,10 @@ public class RequestExecutor {
                 contentBuilder.append(entry.getKey() + ": " + value + "\n");
             }
         }
-        if(null!=requestMeta.contentType){
-            if (requestMeta.contentType.contains("application/json")
-                    || requestMeta.contentType.contains("text/")
-                    || requestMeta.contentType.contains("charset")
+        if(null!=responseMeta.contentType){
+            if (responseMeta.contentType.contains("application/json")
+                    || responseMeta.contentType.contains("text/")
+                    || responseMeta.contentType.contains("charset")
             ) {
                 contentBuilder.append("\n" + response.body());
             }
