@@ -6,6 +6,7 @@ import cn.schoolwow.quickserver.controller.annotation.RequestParam;
 import cn.schoolwow.quickserver.controller.annotation.RequestPart;
 import cn.schoolwow.quickserver.controller.annotation.RestController;
 import cn.schoolwow.quickserver.domain.MultipartFile;
+import cn.schoolwow.quickserver.response.EventSource;
 import cn.schoolwow.quickserver.response.HttpResponse;
 import cn.schoolwow.quickserver.response.HttpStatus;
 import cn.schoolwow.quickserver.util.MIMEUtil;
@@ -84,5 +85,19 @@ public class ResponseController {
         httpResponse.setContentType(MIMEUtil.getMIMEType("xml"));
         httpResponse.setContentLength(Files.size(path));
         httpResponse.getBodyStream().write(Files.readAllBytes(path));
+    }
+
+    @RequestMapping("/eventSource")
+    public void eventSource(
+            HttpResponse httpResponse
+    ) throws IOException {
+        for(int i=0;i<10;i++){
+            httpResponse.eventSource(new EventSource(i,"message","data"+i));
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -5,6 +5,7 @@ import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.domain.RequestMeta;
 import cn.schoolwow.quickhttp.handler.DispatcherHandler;
 import cn.schoolwow.quickhttp.listener.ResponseListener;
+import cn.schoolwow.quickhttp.response.EventSource;
 import cn.schoolwow.quickhttp.response.Response;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -20,6 +21,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Consumer;
 
 public class RequestImpl implements Request {
     private ClientConfig clientConfig;
@@ -288,6 +290,12 @@ public class RequestImpl implements Request {
     @Override
     public Request retryTimes(int retryTimes) {
         requestMeta.retryTimes = retryTimes;
+        return this;
+    }
+
+    @Override
+    public Request onEventSource(Consumer<EventSource> eventSourceConsumer) {
+        requestMeta.eventSourceConsumer = eventSourceConsumer;
         return this;
     }
 

@@ -2,6 +2,7 @@ package cn.schoolwow.quickhttp.request;
 
 import cn.schoolwow.quickhttp.domain.RequestMeta;
 import cn.schoolwow.quickhttp.listener.ResponseListener;
+import cn.schoolwow.quickhttp.response.EventSource;
 import cn.schoolwow.quickhttp.response.Response;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -13,6 +14,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public interface Request extends Cloneable {
     enum UserAgent {
@@ -310,6 +312,12 @@ public interface Request extends Cloneable {
      * @param retryTimes 重试次数,默认为3次
      */
     Request retryTimes(int retryTimes);
+
+    /**
+     * 处理EventSource事件
+     * @param eventSourceConsumer EventSource回调函数
+     * */
+    Request onEventSource(Consumer<EventSource> eventSourceConsumer);
 
     /**
      * 执行请求

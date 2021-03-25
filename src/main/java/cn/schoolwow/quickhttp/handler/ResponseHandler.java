@@ -54,7 +54,7 @@ public class ResponseHandler extends AbstractHandler{
             e.printStackTrace();
         }
         metaWrapper.response = new ResponseImpl(requestMeta, responseMeta,clientConfig);
-        return new RequestLogHandler(metaWrapper);
+        return new EventSourceHandler(metaWrapper);
     }
 
     /**

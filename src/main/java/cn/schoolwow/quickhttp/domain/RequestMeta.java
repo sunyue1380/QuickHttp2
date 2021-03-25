@@ -1,12 +1,14 @@
 package cn.schoolwow.quickhttp.domain;
 
 import cn.schoolwow.quickhttp.request.Request;
+import cn.schoolwow.quickhttp.response.EventSource;
 
 import java.io.Serializable;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * 请求元数据
@@ -106,6 +108,11 @@ public class RequestMeta implements Cloneable, Serializable {
      * 超时重试次数
      */
     public int retryTimes = 3;
+
+    /**
+     * EventSource处理函数
+     */
+    public Consumer<EventSource> eventSourceConsumer;
 
     /**
      * 请求体内容,用于日志记录

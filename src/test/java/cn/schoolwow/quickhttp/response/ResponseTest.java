@@ -117,4 +117,13 @@ public class ResponseTest {
         byte[] bytes = response.bodyAsBytes();
         Assert.assertEquals(response.contentLength(),bytes.length);
     }
+
+    @Test
+    public void eventSource() throws IOException {
+        QuickHttp.connect("/eventSource")
+                .onEventSource(eventSource -> {
+                    Assert.assertEquals("data"+eventSource.id,eventSource.data);
+                })
+                .execute();
+    }
 }
