@@ -7,6 +7,7 @@ import cn.schoolwow.quickserver.controller.annotation.RequestPart;
 import cn.schoolwow.quickserver.controller.annotation.RestController;
 import cn.schoolwow.quickserver.domain.MultipartFile;
 import cn.schoolwow.quickserver.response.HttpResponse;
+import cn.schoolwow.quickserver.response.HttpStatus;
 import cn.schoolwow.quickserver.util.MIMEUtil;
 
 import java.io.IOException;
@@ -20,6 +21,14 @@ import java.nio.file.Paths;
 public class ResponseController {
     @RequestMapping(value = "/statusCode")
     public void statusCode() {}
+
+    @RequestMapping(value = "/redirect")
+    public void redirect(
+            HttpResponse httpResponse
+    ) {
+        httpResponse.status(HttpStatus.FOUND);
+        httpResponse.setHeader("Location","/statusCode");
+    }
 
     @RequestMapping(value = "/charset")
     public String charset(

@@ -1,7 +1,9 @@
 package cn.schoolwow.quickhttp.request;
 
 import cn.schoolwow.quickhttp.domain.ClientConfig;
+import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.domain.RequestMeta;
+import cn.schoolwow.quickhttp.handler.DispatcherHandler;
 import cn.schoolwow.quickhttp.listener.ResponseListener;
 import cn.schoolwow.quickhttp.response.Response;
 import com.alibaba.fastjson.JSONArray;
@@ -291,8 +293,13 @@ public class RequestImpl implements Request {
 
     @Override
     public Response execute() {
-        RequestExecutor requestExecutor = new RequestExecutor(this, clientConfig);
-        return requestExecutor.execute();
+        MetaWrapper metaWrapper = new MetaWrapper(requestMeta,this,clientConfig);
+        try {
+            new DispatcherHandler(metaWrapper).handle();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return metaWrapper.response;
     }
 
     @Override

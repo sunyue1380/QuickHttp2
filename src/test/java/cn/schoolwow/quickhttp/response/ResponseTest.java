@@ -39,6 +39,16 @@ public class ResponseTest {
     }
 
     @Test
+    public void redirect() {
+        Response response = QuickHttp.connect("/redirect")
+                .method(Request.Method.GET)
+                .execute();
+        Assert.assertEquals(200,response.statusCode());
+        Assert.assertEquals("OK",response.statusMessage());
+        Assert.assertEquals("http://127.0.0.1:10003/statusCode",response.url());
+    }
+
+    @Test
     public void charset() throws IOException {
         String data = "这是一个表单参数";
         Response response = QuickHttp.connect("/charset")
