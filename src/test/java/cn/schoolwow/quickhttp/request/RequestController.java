@@ -110,7 +110,7 @@ public class RequestController {
     @RequestMapping(value = "/clone")
     public String clone(
             @RequestHeader(name = "clone") String clone,
-            @RequestHeader(name = "Range") String range
+            @RequestHeader(name = "cloneTest") String range
     ) {
         Assert.assertEquals("value",clone);
         return range;

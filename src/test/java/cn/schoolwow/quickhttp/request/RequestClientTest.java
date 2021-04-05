@@ -148,12 +148,12 @@ public class RequestClientTest {
         Request request = client.connect("/clone")
                 .setHeader("clone","value");
         Response response = request.clone()
-                .ranges(0,100)
+                .setHeader("cloneTest","value")
                 .execute();
-        Assert.assertEquals("bytes=0-100",response.body());
+        Assert.assertEquals("value",response.body());
         response = request.clone()
-                .ranges(100,200)
+                .setHeader("cloneTest","value2")
                 .execute();
-        Assert.assertEquals("bytes=100-200",response.body());
+        Assert.assertEquals("value2",response.body());
     }
 }

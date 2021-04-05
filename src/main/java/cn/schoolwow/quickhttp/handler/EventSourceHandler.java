@@ -30,6 +30,9 @@ public class EventSourceHandler extends AbstractHandler{
      * 处理EventSource类型数据
      * */
     private void handleEventSource() throws IOException {
+        if(null==responseMeta.contentType){
+            return;
+        }
         if(!responseMeta.contentType.toLowerCase().contains("text/event-stream")){
             return;
         }

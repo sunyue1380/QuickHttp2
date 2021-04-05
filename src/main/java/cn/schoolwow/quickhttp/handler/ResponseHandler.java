@@ -60,7 +60,7 @@ public class ResponseHandler extends AbstractHandler{
     /**
      * 获取响应状态码
      * */
-    private void getStatusCode() throws IOException{
+    private void getStatusCode() throws IOException {
         HttpURLConnection httpURLConnection = responseMeta.httpURLConnection;
         try {
             responseMeta.statusCode = httpURLConnection.getResponseCode();
@@ -158,7 +158,11 @@ public class ResponseHandler extends AbstractHandler{
     /**
      * 获取body
      * */
-    private void getBody() throws IOException{
+    private void getBody() throws IOException {
+        if(responseMeta.statusCode>400){
+            logger.trace("[跳过获取请求体步骤]当前状态码无法获取请求体,当前状态码:{}",responseMeta.statusCode);
+            return;
+        }
         try {
             String contentEncoding = responseMeta.httpURLConnection.getContentEncoding();
             InputStream inputStream = responseMeta.httpURLConnection.getErrorStream() != null ? responseMeta.httpURLConnection.getErrorStream() : responseMeta.httpURLConnection.getInputStream();
@@ -182,7 +186,7 @@ public class ResponseHandler extends AbstractHandler{
      */
     private void getCharset() throws IOException {
         getCharsetFromContentType(responseMeta.httpURLConnection.getContentType());
-        if (responseMeta.charset == null) {
+        if (responseMeta.charset == null&&null!=responseMeta.inputStream) {
             byte[] bytes = new byte[1024 * 5];
             responseMeta.inputStream.mark(bytes.length);
             responseMeta.inputStream.read(bytes, 0, bytes.length);

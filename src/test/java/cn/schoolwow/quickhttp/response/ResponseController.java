@@ -46,7 +46,8 @@ public class ResponseController {
             HttpResponse httpResponse
     ) throws IOException {
         httpResponse.setContentType(MIMEUtil.getMIMEType(file.suffixFileName));
-        httpResponse.getBodyStream().write(file.bytes);
+        httpResponse.setContentLength(file.bytes.length);
+        httpResponse.getOutputStream().write(file.bytes);
     }
 
     @RequestMapping(value = "/filename")
@@ -84,14 +85,14 @@ public class ResponseController {
         Path path = Paths.get(System.getProperty("user.dir")+"/pom.xml");
         httpResponse.setContentType(MIMEUtil.getMIMEType("xml"));
         httpResponse.setContentLength(Files.size(path));
-        httpResponse.getBodyStream().write(Files.readAllBytes(path));
+        httpResponse.getOutputStream().write(Files.readAllBytes(path));
     }
 
     @RequestMapping("/eventSource")
     public void eventSource(
             HttpResponse httpResponse
     ) throws IOException {
-        for(int i=0;i<10;i++){
+        for(int i=0;i<3;i++){
             httpResponse.eventSource(new EventSource(i,"message","data"+i));
             try {
                 Thread.sleep(1000);
