@@ -153,7 +153,6 @@ public class ResponseImpl implements Response {
 
     @Override
     public JSONObject bodyAsJSONObject() throws IOException {
-        body();
         JSONObject object = JSON.parseObject(body());
         return object;
     }
@@ -164,12 +163,14 @@ public class ResponseImpl implements Response {
         return array;
     }
 
+    @Override
     public JSONObject jsonpAsJSONObject() throws IOException {
         String body = body();
         int startIndex = body.indexOf("(") + 1, endIndex = body.lastIndexOf(")");
         return JSON.parseObject(body.substring(startIndex, endIndex));
     }
 
+    @Override
     public JSONArray jsonpAsJSONArray() throws IOException {
         String body = body();
         int startIndex = body.indexOf("(") + 1, endIndex = body.lastIndexOf(")");
@@ -179,10 +180,17 @@ public class ResponseImpl implements Response {
     @Override
     public byte[] bodyAsBytes() throws IOException {
         Path path = Files.createTempFile("QuickHttp", ".response");
-        bodyAsFile(path);
-        responseMeta.body = Files.readAllBytes(path);
-        Files.deleteIfExists(path);
-        disconnect();
+        try {
+            bodyAsFile(path);
+            if(Files.exists(path)){
+                responseMeta.body = Files.readAllBytes(path);
+            }
+        }catch (IOException e){
+            throw e;
+        }finally {
+            Files.deleteIfExists(path);
+            disconnect();
+        }
         return responseMeta.body;
     }
 

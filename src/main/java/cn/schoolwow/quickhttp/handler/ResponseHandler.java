@@ -74,9 +74,11 @@ public class ResponseHandler extends AbstractHandler{
         }
         //获取顶级域
         responseMeta.topHost = httpURLConnection.getURL().getHost();
-        String substring = responseMeta.topHost.substring(0,responseMeta.topHost.lastIndexOf("."));
-        if(substring.contains(".")){
-            responseMeta.topHost = responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
+        if(responseMeta.topHost.contains(".")){
+            String substring = responseMeta.topHost.substring(0,responseMeta.topHost.lastIndexOf("."));
+            if(substring.contains(".")){
+                responseMeta.topHost = responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
+            }
         }
     }
 
