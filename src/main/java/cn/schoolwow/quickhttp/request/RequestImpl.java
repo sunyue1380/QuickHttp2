@@ -354,4 +354,32 @@ public class RequestImpl implements Request {
     public RequestMeta requestMeta() {
         return requestMeta;
     }
+
+    /**
+     * 执行重定向操作
+     * @param location 重定向地址
+     * */
+    public void redirect(String location){
+        //处理相对路径形式的重定向
+        if (location.startsWith("http")) {
+            url(location);
+        } else if (location.startsWith("/")) {
+            url(requestMeta.url.getProtocol() + "://" + requestMeta.url.getHost() + ":" + (requestMeta.url.getPort() == -1 ? requestMeta.url.getDefaultPort() : requestMeta.url.getPort()) + location);
+        } else {
+            String u = requestMeta.url.toString();
+            url(u.substring(0, u.lastIndexOf("/")) + "/" + location);
+        }
+        //重定向时方法改为get方法,删除所有主体内容
+        requestMeta.statusLine = null;
+        method(Request.Method.GET);
+        requestMeta.statusLine = null;
+        requestMeta.contentType = null;
+        requestMeta.userContentType = null;
+        requestMeta.boundary = null;
+        requestMeta.parameterMap.clear();
+        requestMeta.dataMap.clear();
+        requestMeta.dataFileMap.clear();
+        requestMeta.requestBody = null;
+        requestMeta.bodyLog = null;
+    }
 }

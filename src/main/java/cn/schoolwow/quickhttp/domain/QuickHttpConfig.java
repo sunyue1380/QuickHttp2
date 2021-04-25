@@ -38,8 +38,6 @@ public class QuickHttpConfig {
     private static Path configResultPath = Paths.get(System.getProperty("user.dir") + "/QuickHttpConfigResult.txt");
 
     static {
-        //打开限制头部
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         //禁止httpUrlConnection自动重试
         System.setProperty("sun.net.http.retryPost", "false");
 
