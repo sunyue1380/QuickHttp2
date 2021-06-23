@@ -151,7 +151,7 @@ public class RequestHandler extends AbstractHandler{
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
                 builder.append("[Form]"+requestMeta.dataMap.toString());
             }
-            if (null != requestMeta.contentType && requestMeta.contentType.isEmpty()) {
+            if (null != requestMeta.contentType && !requestMeta.contentType.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", requestMeta.contentType);
             }
             //开始正式写入数据
