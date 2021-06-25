@@ -1,0 +1,8 @@
+#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXTINF:13,
+http://example.m3u8.com/aa620619-17af-45f3-9dfa-6659d99d4b8d.ts
+#EXTINF:12,
+http://example.m3u8.com/627396fd-26c0-4f53-b643-4b23d3ada57f.ts
+#EXTINF:12,
+http://example.m3u8.com/4144737e-ccaf-4431-bc12-4a5e045e6780.ts
