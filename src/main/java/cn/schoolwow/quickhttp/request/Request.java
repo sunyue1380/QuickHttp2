@@ -208,6 +208,13 @@ public interface Request extends Cloneable {
     Request parameter(String key, String value);
 
     /**
+     * 设置路径请求参数
+     *
+     * @param parameterMap   请求参数
+     */
+    Request parameter(Map<String,String> parameterMap);
+
+    /**
      * 设置表单请求参数
      *
      * @param key   表单请求参数键

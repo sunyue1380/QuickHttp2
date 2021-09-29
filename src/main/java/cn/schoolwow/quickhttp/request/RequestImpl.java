@@ -200,6 +200,12 @@ public class RequestImpl implements Request {
     }
 
     @Override
+    public Request parameter(Map<String,String> parameterMap) {
+        requestMeta.parameterMap.putAll(parameterMap);
+        return this;
+    }
+
+    @Override
     public Request data(String key, String value) {
         requestMeta.dataMap.put(key, value);
         return this;
