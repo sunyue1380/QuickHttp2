@@ -58,8 +58,6 @@ public class RequestClientTest {
                 .userAgent("userAgent")
                 .referrer("referer")
                 .setHeader("customerHeader","customerValue")
-                .ajax()
-                .ranges(0,100)
                 .execute();
         Assert.assertEquals(200,response.statusCode());
     }

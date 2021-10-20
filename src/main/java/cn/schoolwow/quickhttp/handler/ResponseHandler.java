@@ -41,34 +41,42 @@ public class ResponseHandler extends AbstractHandler{
 
     @Override
     public Handler handle() throws IOException {
-        getStatusCode();
+        boolean statusError = false;
+        if(requestMeta.ignoreHttpErrors||clientConfig.ignoreHttpErrors){
+            try {
+                getStatusCode();
+            }catch (FileNotFoundException e){
+                statusError = true;
+                responseMeta.statusCode = 404;
+                responseMeta.statusMessage = "Not Found";
+            }catch (IOException e){
+                statusError = true;
+                String message = e.getMessage();
+                if(message.startsWith("Server returned HTTP response code: ")){
+                    responseMeta.statusCode = Integer.parseInt(message.substring("Server returned HTTP response code: ".length(),message.indexOf(" for URL: ")));
+                    responseMeta.statusMessage = "";
+                }
+            }
+        }else{
+            getStatusCode();
+        }
         getRequestHeader();
         getResponseHeader();
-        getBody();
-        getCharset();
-        //提取Cookie信息
-        try {
-            URI uri = responseMeta.httpURLConnection.getURL().toURI();
-            clientConfig.cookieManager.put(uri, responseMeta.httpURLConnection.getHeaderFields());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        if(!statusError){
+            getBody();
+            getCharset();
         }
-        metaWrapper.response = new ResponseImpl(requestMeta, responseMeta,clientConfig);
         return new EventSourceHandler(metaWrapper);
     }
 
     /**
      * 获取响应状态码
+     * @return 是否继续执行
      * */
     private void getStatusCode() throws IOException {
         HttpURLConnection httpURLConnection = responseMeta.httpURLConnection;
-        try {
-            responseMeta.statusCode = httpURLConnection.getResponseCode();
-            responseMeta.statusMessage = httpURLConnection.getResponseMessage();
-        } catch (FileNotFoundException e) {
-            responseMeta.statusCode = 404;
-            responseMeta.statusMessage = "Not Found";
-        }
+        responseMeta.statusCode = httpURLConnection.getResponseCode();
+        responseMeta.statusMessage = httpURLConnection.getResponseMessage();
         if (null == responseMeta.statusMessage) {
             responseMeta.statusMessage = "";
         }
@@ -114,6 +122,14 @@ public class ResponseHandler extends AbstractHandler{
         }catch (Exception e){
             e.printStackTrace();
         }
+        //提取Cookie信息
+        try {
+            URI uri = responseMeta.httpURLConnection.getURL().toURI();
+            clientConfig.cookieManager.put(uri, responseMeta.httpURLConnection.getHeaderFields());
+        } catch (URISyntaxException | IOException e) {
+            e.printStackTrace();
+        }
+        metaWrapper.response = new ResponseImpl(requestMeta, responseMeta,clientConfig);
     }
 
     /**
@@ -161,7 +177,7 @@ public class ResponseHandler extends AbstractHandler{
      * 获取body
      * */
     private void getBody() throws IOException {
-        if(!requestMeta.ignoreHttpErrors&&!clientConfig.ignoreHttpErrors&&responseMeta.statusCode>400){
+        if(!requestMeta.ignoreHttpErrors&&!clientConfig.ignoreHttpErrors&&responseMeta.statusCode>=400){
             logger.warn("[跳过获取请求体]当前状态码无法获取请求体,当前状态码:{}",responseMeta.statusCode);
             return;
         }
@@ -178,8 +194,8 @@ public class ResponseHandler extends AbstractHandler{
             responseMeta.inputStream = inputStream;
             responseMeta.inputStream = new BufferedInputStream(inputStream);
             responseMeta.inputStream = new SpeedLimitInputStream(responseMeta.inputStream);
-        } catch (FileNotFoundException e) {
-            logger.warn("[读取输入流失败]");
+        } catch (IOException e) {
+            logger.warn("[读取输入流失败]{}",e.getMessage());
         }
     }
 

@@ -27,17 +27,11 @@ public class RequestController {
     public void header(
             @RequestHeader(name = "User-Agent") String userAgent,
             @RequestHeader(name = "Referer") String referer,
-            @RequestHeader(name = "customerHeader") String customerHeader,
-            @RequestHeader(name = "Origin") String origin,
-            @RequestHeader(name = "X-Requested-With") String XRequestedWith,
-            @RequestHeader(name = "Range") String range
+            @RequestHeader(name = "customerHeader") String customerHeader
     ) {
         Assert.assertEquals("userAgent",userAgent);
         Assert.assertEquals("referer",referer);
         Assert.assertEquals("customerValue",customerHeader);
-        Assert.assertEquals("http://127.0.0.1",origin);
-        Assert.assertEquals("XMLHttpRequest",XRequestedWith);
-        Assert.assertEquals("bytes=0-100",range);
     }
 
     @RequestMapping(value = "/cookie")
