@@ -74,7 +74,7 @@ public class RequestHandler extends AbstractHandler{
         final HttpURLConnection httpURLConnection = (HttpURLConnection) (
                 requestMeta.proxy == null ? u.openConnection() : u.openConnection(requestMeta.proxy)
         );
-        logger.info("[请求行]{} {},代理:{}", requestMeta.method.name(), u, requestMeta.proxy == null ? "无" : requestMeta.proxy.address());
+        logger.debug("[请求行]{} {},代理:{}", requestMeta.method.name(), u, requestMeta.proxy == null ? "无" : requestMeta.proxy.address());
         //判断是否https
         if (httpURLConnection instanceof HttpsURLConnection) {
             ((HttpsURLConnection) httpURLConnection).setSSLSocketFactory(clientConfig.sslSocketFactory);

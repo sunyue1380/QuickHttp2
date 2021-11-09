@@ -249,8 +249,6 @@ public class ResponseImpl implements Response {
             long expectFileSize = fileSize + contentLength();
             if (!responseMeta.headerMap.containsKey("Content-Encoding")&&(Files.notExists(file) || Files.size(file) != expectFileSize)) {
                 logger.warn("[文件下载失败]预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
-            }else{
-                responseMeta.body = Files.readAllBytes(file);
             }
         }
     }
