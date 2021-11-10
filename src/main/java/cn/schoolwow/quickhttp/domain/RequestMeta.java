@@ -119,6 +119,11 @@ public class RequestMeta implements Cloneable, Serializable {
      */
     public transient String bodyLog;
 
+    /**
+     * 日志文件路径
+     */
+    public transient String logFilePath;
+
     public RequestMeta() {
         headerMap.put("User-Agent", new ArrayList<>(Arrays.asList(Request.UserAgent.CHROME.userAgent)));
         headerMap.put("Accept-Encoding", new ArrayList<>(Arrays.asList("gzip, deflate")));

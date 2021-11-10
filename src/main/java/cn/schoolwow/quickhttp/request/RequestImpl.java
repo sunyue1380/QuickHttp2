@@ -306,12 +306,23 @@ public class RequestImpl implements Request {
     }
 
     @Override
+    public Request log(String logFilePath) {
+        requestMeta.logFilePath = logFilePath;
+        return this;
+    }
+
+    @Override
     public Response execute() {
         MetaWrapper metaWrapper = new MetaWrapper(requestMeta,this,clientConfig);
         try {
             new DispatcherHandler(metaWrapper).handle();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }finally {
+            if(null!=metaWrapper.pw){
+                metaWrapper.pw.flush();
+                metaWrapper.pw.close();
+            }
         }
         return metaWrapper.response;
     }

@@ -1,5 +1,6 @@
 package cn.schoolwow.quickhttp.handler;
 
+import cn.schoolwow.quickhttp.domain.LogLevel;
 import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.request.RequestImpl;
 
@@ -27,8 +28,10 @@ public class RedirectHandler extends AbstractHandler{
         String location = responseMeta.httpURLConnection.getHeaderField("Location");
         while (requestMeta.followRedirects && null != location) {
             if (followRedirectTimes >= requestMeta.maxFollowRedirectTimes) {
+                log(LogLevel.WARN,"重定向次数过多!限制最大次数:"+requestMeta.maxFollowRedirectTimes);
                 throw new IOException("重定向次数过多!限制最大次数:" + requestMeta.maxFollowRedirectTimes);
             }
+            log(LogLevel.DEBUG,"执行重定向!地址:{}",location);
             RequestImpl requestImpl = (RequestImpl) request;
             requestImpl.redirect(location);
             responseMeta.reset();

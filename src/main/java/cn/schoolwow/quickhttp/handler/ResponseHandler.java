@@ -3,6 +3,7 @@ package cn.schoolwow.quickhttp.handler;
 import cn.schoolwow.quickhttp.document.Document;
 import cn.schoolwow.quickhttp.document.element.Element;
 import cn.schoolwow.quickhttp.document.element.Elements;
+import cn.schoolwow.quickhttp.domain.LogLevel;
 import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.response.ResponseImpl;
 import cn.schoolwow.quickhttp.response.SpeedLimitInputStream;
@@ -49,6 +50,7 @@ public class ResponseHandler extends AbstractHandler{
                 statusError = true;
                 responseMeta.statusCode = 404;
                 responseMeta.statusMessage = "Not Found";
+                log(LogLevel.ERROR,"链接404");
             }catch (IOException e){
                 statusError = true;
                 String message = e.getMessage();
@@ -56,6 +58,7 @@ public class ResponseHandler extends AbstractHandler{
                     responseMeta.statusCode = Integer.parseInt(message.substring("Server returned HTTP response code: ".length(),message.indexOf(" for URL: ")));
                     responseMeta.statusMessage = "";
                 }
+                e.printStackTrace(metaWrapper.pw);
             }
         }else{
             getStatusCode();
@@ -178,7 +181,7 @@ public class ResponseHandler extends AbstractHandler{
      * */
     private void getBody() throws IOException {
         if(!requestMeta.ignoreHttpErrors&&!clientConfig.ignoreHttpErrors&&responseMeta.statusCode>=400){
-            logger.warn("[跳过获取请求体]当前状态码无法获取请求体,当前状态码:{}",responseMeta.statusCode);
+            log(LogLevel.WARN,"[跳过获取请求体]当前状态码无法获取请求体,当前状态码:{}",responseMeta.statusCode);
             return;
         }
         try {
@@ -195,7 +198,8 @@ public class ResponseHandler extends AbstractHandler{
             responseMeta.inputStream = new BufferedInputStream(inputStream);
             responseMeta.inputStream = new SpeedLimitInputStream(responseMeta.inputStream);
         } catch (IOException e) {
-            logger.warn("[读取输入流失败]{}",e.getMessage());
+            log(LogLevel.WARN,"读取输入流失败");
+            e.printStackTrace(metaWrapper.pw);
         }
     }
 

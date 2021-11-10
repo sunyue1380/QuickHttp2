@@ -327,6 +327,12 @@ public interface Request extends Cloneable {
     Request onEventSource(Consumer<EventSource> eventSourceConsumer);
 
     /**
+     * 指定日志文件路径
+     * @param logFilePath 日志文件路径
+     * */
+    Request log(String logFilePath);
+
+    /**
      * 执行请求
      */
     Response execute();
