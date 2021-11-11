@@ -82,6 +82,11 @@ public class SpeedLimitInputStream extends InputStream {
     }
 
     @Override
+    public int available() throws IOException {
+        return inputStream.available();
+    }
+
+    @Override
     public synchronized void mark(int readlimit) {
         inputStream.mark(readlimit);
     }

@@ -34,7 +34,7 @@ public class MetaWrapper {
         this.request = request;
         this.clientConfig = clientConfig;
         if(null==requestMeta.logFilePath&&null!=clientConfig.logDirectoryPath){
-            requestMeta.logFilePath = clientConfig.logDirectoryPath + "/" +requestMeta.url.getHost() + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"))+".txt";
+            requestMeta.logFilePath = clientConfig.logDirectoryPath + "/QuickHttp_" +requestMeta.url.getHost() + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"))+".txt";
         }
         if(null!=requestMeta.logFilePath){
             File logFile = new File(requestMeta.logFilePath);

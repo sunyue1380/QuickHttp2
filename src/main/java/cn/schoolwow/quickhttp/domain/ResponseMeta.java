@@ -5,6 +5,7 @@ import cn.schoolwow.quickhttp.document.DocumentParser;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,11 @@ public class ResponseMeta {
      * Document对象
      */
     public DocumentParser documentParser;
+
+    /**
+     * 下载存放文件
+     * */
+    public Path filePath;
 
     public void reset(){
         this.httpURLConnection = null;

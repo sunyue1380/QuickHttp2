@@ -5,11 +5,9 @@ import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,27 +59,11 @@ public class RequestLogHandler extends AbstractHandler{
                     || responseMeta.contentType.contains("text/")
                     || responseMeta.contentType.contains("charset")
             ) {
-                //只取前1024个字节
-                Path path = Files.createTempFile("QuickHttp", ".response");
-                byte[] bytes = null;
-                try {
-                    response.bodyAsFile(path);
-                    if(Files.exists(path)){
-                        if(Files.size(path)<=1024){
-                            bytes = Files.readAllBytes(path);
-                        }else{
-                            bytes = new byte[1024];
-                            int length = 0;
-                            FileInputStream fis = new FileInputStream(path.toFile());
-                            fis.read(bytes,0,bytes.length);
-                            fis.close();
-                        }
-                    }
-                }catch (IOException e){
-                    throw e;
-                }finally {
-                    Files.deleteIfExists(path);
-                }
+                InputStream inputStream = response.bodyStream();
+                inputStream.mark(1024);
+                byte[] bytes = new byte[Math.min(1024,inputStream.available())];
+                inputStream.read(bytes);
+                inputStream.reset();
                 contentBuilder.append("\n" + new String(bytes, Charset.forName(responseMeta.charset)) + "......");
             }
         } else {

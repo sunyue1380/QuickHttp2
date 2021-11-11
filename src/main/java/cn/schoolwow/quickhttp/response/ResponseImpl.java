@@ -179,18 +179,13 @@ public class ResponseImpl implements Response {
 
     @Override
     public byte[] bodyAsBytes() throws IOException {
-        Path path = Files.createTempFile("QuickHttp", ".response");
-        try {
-            bodyAsFile(path);
-            if(Files.exists(path)){
-                responseMeta.body = Files.readAllBytes(path);
-            }
-        }catch (IOException e){
-            throw e;
-        }finally {
-            Files.deleteIfExists(path);
-            disconnect();
+        if(null != responseMeta.filePath && Files.notExists(responseMeta.filePath)){
+            throw new IllegalArgumentException("调用bodyAsFile方法后不能再调用其他bodyAs系列方法!");
         }
+        if(null == responseMeta.filePath){
+            saveAsFile();
+        }
+        responseMeta.body = Files.readAllBytes(responseMeta.filePath);
         return responseMeta.body;
     }
 
@@ -202,55 +197,13 @@ public class ResponseImpl implements Response {
 
     @Override
     public void bodyAsFile(Path file) throws IOException {
-        if (null == responseMeta.inputStream) {
-            logger.warn("[写入文件失败]输入流为空!url:{}", url());
+        if(null != responseMeta.filePath && Files.size(responseMeta.filePath)>0){
+            Files.copy(responseMeta.filePath,file,StandardCopyOption.REPLACE_EXISTING);
             return;
         }
-
-        if (!Files.exists(file.getParent())) {
-            Files.createDirectories(file.getParent());
-        }
-
-        long fileSize = Files.exists(file) ? Files.size(file) : 0;
-        if (null != responseMeta.body) {
-            if (Files.exists(file)) {
-                Files.write(file, responseMeta.body, StandardOpenOption.APPEND);
-            } else {
-                Files.write(file, responseMeta.body, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-            }
-        } else {
-            //处理超时异常,尝试重试
-            int retryTimes = 1;
-            while (retryTimes <= requestMeta.retryTimes) {
-                try {
-                    if (null != responseMeta.httpURLConnection.getContentEncoding() || contentLength() == -1) {
-                        Files.copy(responseMeta.inputStream, file, StandardCopyOption.REPLACE_EXISTING);
-                    } else {
-                        ReadableByteChannel readableByteChannel = Channels.newChannel(responseMeta.inputStream);
-                        Set<StandardOpenOption> openOptions = null;
-                        if (Files.exists(file)) {
-                            openOptions = EnumSet.of(StandardOpenOption.APPEND);
-                        } else {
-                            openOptions = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-                        }
-                        FileChannel fileChannel = FileChannel.open(file, openOptions);
-                        fileChannel.transferFrom(readableByteChannel, Files.size(file), contentLength());
-                        fileChannel.close();
-                    }
-                    break;
-                } catch (SocketTimeoutException e) {
-                    logger.warn("[下载超时]重试{}/{},原因:{},链接:{}", retryTimes, requestMeta.retryTimes, e.getMessage(), url());
-                    retryTimes++;
-                }
-            }
-        }
-        if (contentLength() > 0) {
-            //检查是否下载成功
-            long expectFileSize = fileSize + contentLength();
-            if (!responseMeta.headerMap.containsKey("Content-Encoding")&&(Files.notExists(file) || Files.size(file) != expectFileSize)) {
-                logger.warn("[文件下载失败]预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
-            }
-        }
+        saveAsFile();
+        Files.copy(responseMeta.filePath,file,StandardCopyOption.REPLACE_EXISTING);
+        Files.deleteIfExists(responseMeta.filePath);
     }
 
     @Override
@@ -290,6 +243,18 @@ public class ResponseImpl implements Response {
             e.printStackTrace();
         }
         responseMeta.httpURLConnection.disconnect();
+        if(null!=responseMeta.filePath){
+            try {
+                Files.deleteIfExists(responseMeta.filePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public String logFilePath() {
+        return requestMeta.logFilePath;
     }
 
     @Override
@@ -297,4 +262,60 @@ public class ResponseImpl implements Response {
         return responseMeta;
     }
 
+    /**保存输入流到文件中*/
+    private void saveAsFile() throws IOException {
+        if (null == responseMeta.inputStream) {
+            throw new IOException("写入文件失败!输入流为空!url:" + url());
+        }
+
+        Path file = Files.createTempFile("QuickHttp.", ".response");
+
+        if (!Files.exists(file.getParent())) {
+            Files.createDirectories(file.getParent());
+        }
+
+        long fileSize = Files.exists(file) ? Files.size(file) : 0;
+        if (null != responseMeta.body) {
+            if (Files.exists(file)) {
+                Files.write(file, responseMeta.body, StandardOpenOption.APPEND);
+            } else {
+                Files.write(file, responseMeta.body, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+            }
+        } else {
+            //处理超时异常,尝试重试
+            int retryTimes = 1;
+            long contentLength = contentLength();
+            while (retryTimes <= requestMeta.retryTimes) {
+                try {
+                    if (null != responseMeta.httpURLConnection.getContentEncoding() || contentLength == -1) {
+                        Files.copy(responseMeta.inputStream, file, StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        ReadableByteChannel readableByteChannel = Channels.newChannel(responseMeta.inputStream);
+                        Set<StandardOpenOption> openOptions = null;
+                        if (Files.exists(file)) {
+                            openOptions = EnumSet.of(StandardOpenOption.APPEND);
+                        } else {
+                            openOptions = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+                        }
+                        FileChannel fileChannel = FileChannel.open(file, openOptions);
+                        fileChannel.transferFrom(readableByteChannel, Files.size(file), contentLength);
+                        fileChannel.close();
+                    }
+                    break;
+                } catch (SocketTimeoutException e) {
+                    logger.warn("[下载超时]重试{}/{},原因:{},链接:{}", retryTimes, requestMeta.retryTimes, e.getMessage(), url());
+                    retryTimes++;
+                }
+            }
+        }
+        if (contentLength() > 0) {
+            //检查是否下载成功
+            long expectFileSize = fileSize + contentLength();
+            if (!responseMeta.headerMap.containsKey("Content-Encoding")&&(Files.notExists(file) || Files.size(file) != expectFileSize)) {
+                logger.warn("[文件下载失败]预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
+                return;
+            }
+        }
+        responseMeta.filePath = file;
+    }
 }

@@ -306,7 +306,7 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public Request log(String logFilePath) {
+    public Request logFilePath(String logFilePath) {
         requestMeta.logFilePath = logFilePath;
         return this;
     }

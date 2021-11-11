@@ -163,6 +163,11 @@ public interface Response {
     void disconnect();
 
     /**
+     * 返回下载日志路径
+     * */
+    String logFilePath();
+
+    /**
      * 获取返回元数据
      */
     ResponseMeta responseMeta();

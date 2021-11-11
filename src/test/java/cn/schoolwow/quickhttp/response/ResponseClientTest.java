@@ -38,6 +38,7 @@ public class ResponseClientTest {
         Assert.assertEquals(200,response.statusCode());
         Assert.assertEquals("OK",response.statusMessage());
         Assert.assertEquals("http://127.0.0.1:10003/statusCode",response.url());
+        response.disconnect();
     }
 
     @Test
@@ -49,6 +50,7 @@ public class ResponseClientTest {
                 .execute();
         Assert.assertEquals("GBK",response.charset());
         Assert.assertEquals(data,response.body());
+        response.disconnect();
     }
 
     @Test
@@ -61,6 +63,7 @@ public class ResponseClientTest {
                 .execute();
         Assert.assertEquals("text/xml; charset=utf-8",response.contentType());
         Assert.assertEquals(Files.size(path),response.contentLength());
+        response.disconnect();
     }
 
     @Test
@@ -68,6 +71,7 @@ public class ResponseClientTest {
         Response response = client.connect("/filename")
                 .execute();
         Assert.assertEquals("中文测试pom.xml",response.filename());
+        response.disconnect();
     }
 
     @Test
@@ -75,6 +79,7 @@ public class ResponseClientTest {
         Response response = client.connect("/acceptRanges")
                 .execute();
         Assert.assertTrue(response.acceptRanges());
+        response.disconnect();
     }
 
     @Test
@@ -83,6 +88,7 @@ public class ResponseClientTest {
                 .execute();
         Assert.assertTrue(response.hasHeader("hasHeader"));
         Assert.assertTrue(response.hasHeader("hasHeader","value"));
+        response.disconnect();
     }
 
     @Test
@@ -91,22 +97,24 @@ public class ResponseClientTest {
                 .execute();
         Assert.assertTrue(response.hasCookie("hasCookie"));
         Assert.assertTrue(response.hasCookie("hasCookie","value"));
+        response.disconnect();
     }
 
     @Test
     public void bodyAsFile() throws IOException {
         Response response = client.connect("/bodyAsFile")
                 .acceptEncoding(false)
+                .proxy("127.0.0.1",8888)
                 .execute();
         Path tempFilePath = Files.createTempFile("QuickHttp2","xml");
         try {
             response.bodyAsFile(tempFilePath);
             Assert.assertTrue(Files.exists(tempFilePath));
             Assert.assertEquals(response.contentLength(),Files.size(tempFilePath));
+            Assert.assertEquals(response.contentLength(),Files.size(tempFilePath));
+            response.disconnect();
         }finally {
             Files.deleteIfExists(tempFilePath);
         }
-        byte[] bytes = response.bodyAsBytes();
-        Assert.assertEquals(response.contentLength(),bytes.length);
     }
 }

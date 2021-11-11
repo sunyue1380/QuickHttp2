@@ -37,6 +37,7 @@ public class RequestTest {
                 .basicAuth("quickHttp","123456")
                 .execute();
         Assert.assertEquals("true",response.body());
+        response.disconnect();
     }
 
     @Test
@@ -48,6 +49,7 @@ public class RequestTest {
                 .requestBody(data)
                 .execute();
         Assert.assertEquals(data,response.body());
+        response.disconnect();
     }
 
     @Test
@@ -60,6 +62,7 @@ public class RequestTest {
                 .ranges(0,100)
                 .execute();
         Assert.assertEquals(200,response.statusCode());
+        response.disconnect();
     }
 
     @Test
@@ -71,6 +74,7 @@ public class RequestTest {
                     .cookie(new HttpCookie("cookie2","value"))
                     .execute();
             Assert.assertEquals(200,response.statusCode());
+            response.disconnect();
         }
         {
             CookieOption cookieOption = QuickHttp.clientConfig().cookieOption();
@@ -78,6 +82,7 @@ public class RequestTest {
             Response response = QuickHttp.connect("/sendCookie")
                     .execute();
             Assert.assertEquals(200,response.statusCode());
+            response.disconnect();
         }
     }
 
@@ -87,6 +92,7 @@ public class RequestTest {
                 .parameter("parameter","value")
                 .execute();
         Assert.assertEquals(200,response.statusCode());
+        response.disconnect();
     }
 
     @Test
@@ -96,6 +102,7 @@ public class RequestTest {
                 .data("data","value")
                 .execute();
         Assert.assertEquals(200,response.statusCode());
+        response.disconnect();
     }
 
     @Test
@@ -107,6 +114,7 @@ public class RequestTest {
                 .data("data","value")
                 .execute();
         Assert.assertEquals(Files.size(path)+"",response.body());
+        response.disconnect();
     }
 
     @Test
@@ -119,6 +127,7 @@ public class RequestTest {
                 )
                 .execute();
         Assert.assertEquals("2",response.body());
+        response.disconnect();
     }
 
     @Test
@@ -130,6 +139,7 @@ public class RequestTest {
                 .data("data1","value")
                 .execute();
         Assert.assertEquals(200,response.statusCode());
+        response.disconnect();
     }
 
     @Test
@@ -139,6 +149,7 @@ public class RequestTest {
                 .requestBody("requestBody")
                 .execute();
         Assert.assertEquals("requestBody",response.body());
+        response.disconnect();
     }
 
     @Test
@@ -153,5 +164,6 @@ public class RequestTest {
                 .setHeader("cloneTest","value2")
                 .execute();
         Assert.assertEquals("value2",response.body());
+        response.disconnect();
     }
 }

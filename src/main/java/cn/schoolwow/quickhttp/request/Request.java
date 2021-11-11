@@ -330,7 +330,7 @@ public interface Request extends Cloneable {
      * 指定日志文件路径
      * @param logFilePath 日志文件路径
      * */
-    Request log(String logFilePath);
+    Request logFilePath(String logFilePath);
 
     /**
      * 执行请求

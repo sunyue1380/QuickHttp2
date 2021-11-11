@@ -111,11 +111,10 @@ public class ResponseTest {
             response.bodyAsFile(tempFilePath);
             Assert.assertTrue(Files.exists(tempFilePath));
             Assert.assertEquals(response.contentLength(),Files.size(tempFilePath));
+            Assert.assertEquals(response.contentLength(),Files.size(tempFilePath));
         }finally {
             Files.deleteIfExists(tempFilePath);
         }
-        byte[] bytes = response.bodyAsBytes();
-        Assert.assertEquals(response.contentLength(),bytes.length);
     }
 
     @Test
