@@ -24,12 +24,13 @@ public class RequestLogHandler extends AbstractHandler{
 
     @Override
     public Handler handle() throws IOException {
-        log(LogLevel.DEBUG,"[请求与响应]{}\n{}",requestMeta.statusLine, getRequestAndResponseLog());
         if (!requestMeta.ignoreHttpErrors) {
             if (responseMeta.statusCode < 200 || responseMeta.statusCode >= 400) {
+                logger.warn("[请求与响应]{}\n{}",requestMeta.statusLine, getRequestAndResponseLog());
                 throw new IOException("http状态异常!状态码:" + responseMeta.statusCode + ",地址:" + requestMeta.url);
             }
         }
+        log(LogLevel.DEBUG,"[请求与响应]{}\n{}",requestMeta.statusLine, getRequestAndResponseLog());
         return new RedirectHandler(metaWrapper);
     }
 
@@ -60,11 +61,15 @@ public class RequestLogHandler extends AbstractHandler{
                     || responseMeta.contentType.contains("charset")
             ) {
                 InputStream inputStream = response.bodyStream();
-                inputStream.mark(1024);
-                byte[] bytes = new byte[Math.min(1024,inputStream.available())];
-                inputStream.read(bytes);
-                inputStream.reset();
-                contentBuilder.append("\n" + new String(bytes, Charset.forName(responseMeta.charset)) + "......");
+                if(null!=inputStream){
+                    inputStream.mark(1024);
+                    byte[] bytes = new byte[Math.min(1024,inputStream.available())];
+                    inputStream.read(bytes);
+                    inputStream.reset();
+                    contentBuilder.append("\n" + new String(bytes, Charset.forName(responseMeta.charset)) + "......");
+                }else{
+                    contentBuilder.append("\n[响应内容无法获取]");
+                }
             }
         } else {
             contentBuilder.append("\n[" + response.contentLength() + "]");

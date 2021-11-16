@@ -138,8 +138,10 @@ public class ResponseImpl implements Response {
 
     @Override
     public Response maxDownloadSpeed(int maxDownloadSpeed) {
-        SpeedLimitInputStream speedLimitInputStream = (SpeedLimitInputStream) responseMeta.inputStream;
-        speedLimitInputStream.setMaxDownloadSpeed(maxDownloadSpeed);
+        if(null!=responseMeta.inputStream){
+            SpeedLimitInputStream speedLimitInputStream = (SpeedLimitInputStream) responseMeta.inputStream;
+            speedLimitInputStream.setMaxDownloadSpeed(maxDownloadSpeed);
+        }
         return this;
     }
 
@@ -202,8 +204,10 @@ public class ResponseImpl implements Response {
             return;
         }
         saveAsFile();
-        Files.copy(responseMeta.filePath,file,StandardCopyOption.REPLACE_EXISTING);
-        Files.deleteIfExists(responseMeta.filePath);
+        if(null != responseMeta.filePath){
+            Files.copy(responseMeta.filePath,file,StandardCopyOption.REPLACE_EXISTING);
+            Files.deleteIfExists(responseMeta.filePath);
+        }
     }
 
     @Override
