@@ -13,11 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.nio.channels.Channels;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
@@ -74,7 +76,7 @@ public class ResponseImpl implements Response {
     public String filename() {
         String contentDisposition = responseMeta.httpURLConnection.getHeaderField("Content-Disposition");
         if (null == contentDisposition) {
-            return null;
+            throw new IllegalArgumentException("返回头部无文件名称信息!");
         }
         String fileName = null;
         if (contentDisposition.indexOf("filename*=") > 0) {
@@ -292,7 +294,19 @@ public class ResponseImpl implements Response {
             while (retryTimes <= requestMeta.retryTimes) {
                 try {
                     if (null != responseMeta.httpURLConnection.getContentEncoding() || contentLength == -1) {
-                        Files.copy(responseMeta.inputStream, file, StandardCopyOption.REPLACE_EXISTING);
+                        byte[] buffer = new byte[8192];
+                        int length = 0;
+                        Files.deleteIfExists(file);
+                        OutputStream outputStream = Files.newOutputStream(file,StandardOpenOption.CREATE);
+                        while((length=responseMeta.inputStream.read(buffer,0,buffer.length))!=0){
+                            outputStream.write(buffer,0,length);
+                            if(Thread.currentThread().isInterrupted()){
+                                logger.debug("[线程中断]文件下载任务停止!");
+                                return;
+                            }
+                        }
+                        outputStream.flush();
+                        outputStream.close();
                     } else {
                         ReadableByteChannel readableByteChannel = Channels.newChannel(responseMeta.inputStream);
                         Set<StandardOpenOption> openOptions = null;
@@ -302,7 +316,13 @@ public class ResponseImpl implements Response {
                             openOptions = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
                         }
                         FileChannel fileChannel = FileChannel.open(file, openOptions);
-                        fileChannel.transferFrom(readableByteChannel, Files.size(file), contentLength);
+                        try {
+                            fileChannel.transferFrom(readableByteChannel, Files.size(file), contentLength);
+                        }catch (ClosedByInterruptException e){
+                            logger.debug("[线程中断]文件下载任务停止!");
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
                         fileChannel.close();
                     }
                     break;
@@ -311,6 +331,9 @@ public class ResponseImpl implements Response {
                     retryTimes++;
                 }
             }
+        }
+        if(Thread.currentThread().isInterrupted()){
+            return;
         }
         if (contentLength() > 0) {
             //检查是否下载成功
