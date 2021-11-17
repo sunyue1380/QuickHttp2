@@ -104,7 +104,6 @@ public class ResponseClientTest {
     public void bodyAsFile() throws IOException {
         Response response = client.connect("/bodyAsFile")
                 .acceptEncoding(false)
-                .proxy("127.0.0.1",8888)
                 .execute();
         Path tempFilePath = Files.createTempFile("QuickHttp2","xml");
         try {
