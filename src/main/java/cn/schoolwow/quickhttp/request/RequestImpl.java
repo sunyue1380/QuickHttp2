@@ -247,7 +247,9 @@ public class RequestImpl implements Request {
     @Override
     public Request requestBody(Path file) throws IOException {
         requestMeta.requestBody = Files.readAllBytes(file);
-        requestMeta.contentType = Files.probeContentType(file);
+        if(null==requestMeta.contentType){
+            requestMeta.contentType = Files.probeContentType(file);
+        }
         return this;
     }
 

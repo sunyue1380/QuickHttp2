@@ -101,6 +101,13 @@ public class RequestController {
         return requestBody;
     }
 
+    @RequestMapping(value = "/contentType")
+    public String contentType(
+            @RequestHeader(name = "Content-Type") String contentType
+    ) {
+        return contentType;
+    }
+
     @RequestMapping(value = "/clone")
     public String clone(
             @RequestHeader(name = "clone") String clone,

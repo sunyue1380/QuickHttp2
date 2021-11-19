@@ -29,7 +29,7 @@ public class DispatcherHandler extends AbstractHandler{
         //请求执行前
         List<QuickHttpClientListener> quickHttpClientListenerList = clientConfig.quickHttpClientListenerList;
         for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
-            quickHttpClientListener.beforeExecute(request);
+            quickHttpClientListener.beforeExecute(metaWrapper.request);
         }
         //执行请求
         try {
@@ -48,17 +48,17 @@ public class DispatcherHandler extends AbstractHandler{
                     retryTimes++;
                 }
             }
-            if(null!=response){
+            if(null!=metaWrapper.response){
                 //请求执行成功
                 for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
-                    quickHttpClientListener.executeSuccess(request, response);
+                    quickHttpClientListener.executeSuccess(metaWrapper.request, metaWrapper.response);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
             //请求执行失败
             for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
-                quickHttpClientListener.executeFail(request, e);
+                quickHttpClientListener.executeFail(metaWrapper.request, e);
             }
         }
         return null;

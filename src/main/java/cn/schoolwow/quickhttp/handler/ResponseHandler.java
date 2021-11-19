@@ -199,7 +199,11 @@ public class ResponseHandler extends AbstractHandler{
             responseMeta.inputStream = new SpeedLimitInputStream(responseMeta.inputStream);
         } catch (IOException e) {
             log(LogLevel.WARN,"读取输入流失败");
-            e.printStackTrace(metaWrapper.pw);
+            if(null!=metaWrapper.pw){
+                e.printStackTrace(metaWrapper.pw);
+            }else{
+                e.printStackTrace();
+            }
         }
     }
 

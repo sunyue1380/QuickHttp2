@@ -116,6 +116,9 @@ public class RequestHandler extends AbstractHandler{
         httpURLConnection.setDoInput(true);
         StringBuilder builder = builderThreadLocal.get();
         builder.setLength(0);
+        if (null != requestMeta.contentType) {
+            httpURLConnection.setRequestProperty("Content-Type", requestMeta.contentType);
+        }
         if (requestMeta.method.hasBody() && (!requestMeta.dataFileMap.isEmpty() || null != requestMeta.requestBody || !requestMeta.dataMap.isEmpty())) {
             //优先级 dataFile > requestBody > dataMap
             if (Request.ContentType.MULTIPART_FORMDATA.equals(requestMeta.userContentType) || !requestMeta.dataFileMap.isEmpty()) {
@@ -131,7 +134,9 @@ public class RequestHandler extends AbstractHandler{
                     builder.append("[Multipart]" + requestMeta.dataMap);
                 }
             } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || (requestMeta.requestBody != null && requestMeta.requestBody.length > 0)) {
-                httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType) + "; charset=" + requestMeta.charset + ";");
+                if (null == requestMeta.contentType) {
+                    httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType.name().toLowerCase()) + "; charset=" + requestMeta.charset + ";");
+                }
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
                 builder.append(new String(requestMeta.requestBody,requestMeta.charset));
             } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
@@ -152,9 +157,7 @@ public class RequestHandler extends AbstractHandler{
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
                 builder.append("[Form]"+requestMeta.dataMap.toString());
             }
-            if (null != requestMeta.contentType && !requestMeta.contentType.isEmpty()) {
-                httpURLConnection.setRequestProperty("Content-Type", requestMeta.contentType);
-            }
+
             //开始正式写入数据
             httpURLConnection.setDoOutput(true);
             OutputStream outputStream = httpURLConnection.getOutputStream();

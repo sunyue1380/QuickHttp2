@@ -142,6 +142,16 @@ public class RequestClientTest {
     }
 
     @Test
+    public void contentType() throws IOException {
+        String contentType = "application/oct-stream";
+        Response response = client.connect("/contentType")
+                .contentType(contentType)
+                .requestBody(System.getProperty("user.dir")+"/.gitignore")
+                .execute();
+        Assert.assertEquals(contentType,response.body());
+    }
+
+    @Test
     public void cloneTest() throws IOException {
         Request request = client.connect("/clone")
                 .setHeader("clone","value");
