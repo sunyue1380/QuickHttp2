@@ -3,6 +3,8 @@ package cn.schoolwow.quickhttp.listener;
 import cn.schoolwow.quickhttp.request.Request;
 import cn.schoolwow.quickhttp.response.Response;
 
+import java.io.IOException;
+
 /**
  * http异步调用回调接口
  */
@@ -13,7 +15,7 @@ public interface ResponseListener {
      * @param request  请求信息
      * @param response 响应信息
      */
-    void executeSuccess(Request request, Response response);
+    void executeSuccess(Request request, Response response) throws IOException;
 
     /**
      * http请求成功以后
@@ -21,5 +23,5 @@ public interface ResponseListener {
      * @param request 请求信息
      * @param e       异常信息
      */
-    void executeFail(Request request, Exception e);
+    void executeFail(Request request, Exception e) throws IOException;
 }

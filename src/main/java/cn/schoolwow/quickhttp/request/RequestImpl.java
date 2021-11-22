@@ -340,7 +340,11 @@ public class RequestImpl implements Request {
         }
         clientConfig.threadPoolExecutor.execute(() -> {
             Response response = execute();
-            responseListener.executeSuccess(this, response);
+            try {
+                responseListener.executeSuccess(this, response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
     }
 
