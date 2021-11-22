@@ -28,9 +28,15 @@ public interface Request extends Cloneable {
     }
 
     enum ContentType {
-        MULTIPART_FORMDATA,
-        APPLICATION_JSON,
-        APPLICATION_X_WWW_FORM_URLENCODED;
+        MULTIPART_FORMDATA("multipart/form-data"),
+        APPLICATION_JSON("application/json"),
+        APPLICATION_X_WWW_FORM_URLENCODED("application/x-www-form-urlencoded");
+
+        public String value;
+
+        ContentType(String value) {
+            this.value = value;
+        }
     }
 
     enum Method {

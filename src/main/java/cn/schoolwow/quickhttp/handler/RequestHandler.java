@@ -135,7 +135,7 @@ public class RequestHandler extends AbstractHandler{
                 }
             } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || (requestMeta.requestBody != null && requestMeta.requestBody.length > 0)) {
                 if (null == requestMeta.contentType) {
-                    httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType.name().toLowerCase().replaceFirst("_","/")) + "; charset=" + requestMeta.charset + ";");
+                    httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType.value) + "; charset=" + requestMeta.charset + ";");
                 }
                 httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
                 builder.append(new String(requestMeta.requestBody,requestMeta.charset));
