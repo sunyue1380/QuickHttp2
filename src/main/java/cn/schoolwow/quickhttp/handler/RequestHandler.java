@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -126,7 +126,6 @@ public class RequestHandler extends AbstractHandler{
                     requestMeta.boundary = mimeBoundary();
                 }
                 httpURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + requestMeta.boundary);
-                httpURLConnection.setChunkedStreamingMode(0);
                 if(!requestMeta.dataFileMap.isEmpty()){
                     builder.append("[MultipartFile]" + requestMeta.dataFileMap);
                 }
@@ -137,7 +136,6 @@ public class RequestHandler extends AbstractHandler{
                 if (null == requestMeta.contentType) {
                     httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType.value) + "; charset=" + requestMeta.charset + ";");
                 }
-                httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
                 builder.append(new String(requestMeta.requestBody,requestMeta.charset));
             } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
                 httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + requestMeta.charset);
@@ -154,14 +152,11 @@ public class RequestHandler extends AbstractHandler{
                     formBuilder.deleteCharAt(formBuilder.length() - 1);
                     requestMeta.requestBody = formBuilder.toString().getBytes(Charset.forName(requestMeta.charset));
                 }
-                httpURLConnection.setFixedLengthStreamingMode(requestMeta.requestBody.length);
                 builder.append("[Form]"+requestMeta.dataMap.toString());
             }
 
-            //开始正式写入数据
-            httpURLConnection.setDoOutput(true);
-            OutputStream outputStream = httpURLConnection.getOutputStream();
-            final BufferedWriter w = new BufferedWriter(new OutputStreamWriter(outputStream, requestMeta.charset));
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            final BufferedWriter w = new BufferedWriter(new OutputStreamWriter(baos, requestMeta.charset));
             if (Request.ContentType.MULTIPART_FORMDATA.equals(requestMeta.userContentType) || !requestMeta.dataFileMap.isEmpty()) {
                 if (!requestMeta.dataMap.isEmpty()) {
                     Set<Map.Entry<String, String>> entrySet = requestMeta.dataMap.entrySet();
@@ -184,21 +179,28 @@ public class RequestHandler extends AbstractHandler{
                         w.write("Content-Type: " + Files.probeContentType(file) + "\r\n");
                         w.write("\r\n");
                         w.flush();
-                        outputStream.write(Files.readAllBytes(file));
-                        outputStream.flush();
+                        baos.write(Files.readAllBytes(file));
+                        baos.flush();
                         w.write("\r\n");
                     }
                 }
                 w.write("--" + requestMeta.boundary + "--\r\n");
             } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || requestMeta.requestBody != null && !requestMeta.requestBody.equals("")) {
-                outputStream.write(requestMeta.requestBody);
+                baos.write(requestMeta.requestBody);
             } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
                 if (null != requestMeta.requestBody) {
-                    outputStream.write(requestMeta.requestBody);
+                    baos.write(requestMeta.requestBody);
                 }
             }
             w.flush();
             w.close();
+            //开始正式写入数据
+            switch (requestMeta.streamingMode){
+                case FixedLength:{httpURLConnection.setFixedLengthStreamingMode(baos.size());};break;
+                case Chunked:{httpURLConnection.setChunkedStreamingMode(0);};break;
+            }
+            httpURLConnection.setDoOutput(true);
+            baos.writeTo(httpURLConnection.getOutputStream());
         }
         requestMeta.bodyLog = builder.toString();
         return httpURLConnection;

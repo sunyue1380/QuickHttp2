@@ -39,6 +39,10 @@ public interface Request extends Cloneable {
         }
     }
 
+    enum StreamingMode {
+        Chunked,FixedLength;
+    }
+
     enum Method {
         GET(false), POST(true), PUT(true), DELETE(false), PATCH(true), HEAD(false), OPTIONS(false), TRACE(false);
 
@@ -126,6 +130,13 @@ public interface Request extends Cloneable {
      * @param contentType Content-Type头部
      */
     Request contentType(ContentType contentType);
+
+    /**
+     * 指定输入流模式
+     *
+     * @param streamingMode 流模式,固定长度模式和chunked模式
+     */
+    Request streamMode(StreamingMode streamingMode);
 
     /***
      * 设置ajax请求头部

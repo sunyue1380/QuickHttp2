@@ -112,6 +112,12 @@ public class RequestImpl implements Request {
     }
 
     @Override
+    public Request streamMode(StreamingMode streamingMode) {
+        requestMeta.streamingMode = streamingMode;
+        return this;
+    }
+
+    @Override
     public Request ajax() {
         URL url = requestMeta.url;
         return setHeader("X-Requested-With", "XMLHttpRequest")

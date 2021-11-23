@@ -50,6 +50,11 @@ public class RequestMeta implements Cloneable, Serializable {
     public transient Request.ContentType userContentType;
 
     /**
+     * 用户指定请求类型
+     */
+    public transient Request.StreamingMode streamingMode = Request.StreamingMode.FixedLength;
+
+    /**
      * 分隔符
      */
     public String boundary;
