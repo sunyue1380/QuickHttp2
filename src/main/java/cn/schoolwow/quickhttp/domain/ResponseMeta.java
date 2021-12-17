@@ -5,9 +5,9 @@ import cn.schoolwow.quickhttp.document.DocumentParser;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * 返回元数据
@@ -51,7 +51,7 @@ public class ResponseMeta {
     /**
      * 头部信息
      */
-    public Map<String, List<String>> headerMap = new LinkedHashMap<>();
+    public Map<String, List<String>> headerMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     /**
      * 输入流

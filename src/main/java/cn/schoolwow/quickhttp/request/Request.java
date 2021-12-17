@@ -139,6 +139,11 @@ public interface Request extends Cloneable {
     Request streamMode(StreamingMode streamingMode);
 
     /***
+     * 设置origin头部
+     */
+    Request origin();
+
+    /***
      * 设置ajax请求头部
      */
     Request ajax();

@@ -61,6 +61,7 @@ public class DispatcherHandler extends AbstractHandler{
                 quickHttpClientListener.executeFail(metaWrapper.request, e);
             }
         }
+        System.setProperty("sun.net.http.allowRestrictedHeaders", "false");
         return null;
     }
 

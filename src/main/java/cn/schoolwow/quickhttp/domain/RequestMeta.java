@@ -62,7 +62,7 @@ public class RequestMeta implements Cloneable, Serializable {
     /**
      * 头部信息
      */
-    public Map<String, List<String>> headerMap = new LinkedHashMap<>();
+    public Map<String, List<String>> headerMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     /**
      * parameter信息

@@ -24,6 +24,30 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 public class RequestImpl implements Request {
+    private static final String[] restrictedHeaders = {
+            /* Restricted by XMLHttpRequest2 */
+            //"Accept-Charset",
+            //"Accept-Encoding",
+            "Access-Control-Request-Headers",
+            "Access-Control-Request-Method",
+            "Connection", /* close is allowed */
+            "Content-Length",
+            //"Cookie",
+            //"Cookie2",
+            "Content-Transfer-Encoding",
+            //"Date",
+            "Expect",
+            "Host",
+            "Keep-Alive",
+            "Origin",
+            // "Referer",
+            // "TE",
+            "Trailer",
+            "Transfer-Encoding",
+            "Upgrade",
+            //"User-Agent",
+            "Via"
+    };
     private ClientConfig clientConfig;
     private RequestMeta requestMeta = new RequestMeta();
 
@@ -118,10 +142,14 @@ public class RequestImpl implements Request {
     }
 
     @Override
+    public Request origin() {
+        return setHeader("Origin", requestMeta.url.getProtocol() + "://" + requestMeta.url.getHost());
+    }
+
+    @Override
     public Request ajax() {
-        URL url = requestMeta.url;
-        return setHeader("X-Requested-With", "XMLHttpRequest")
-                .setHeader("Origin", url.getProtocol() + "://" + url.getHost());
+        setHeader("X-Requested-With", "XMLHttpRequest");
+        return origin();
     }
 
     @Override
@@ -323,6 +351,15 @@ public class RequestImpl implements Request {
     public Response execute() {
         MetaWrapper metaWrapper = new MetaWrapper(requestMeta,this,clientConfig);
         try {
+            //判断是否要打开限制头部
+            {
+                for(String restrictedHeader:restrictedHeaders){
+                    if(null!=requestMeta.headerMap.get(restrictedHeader)){
+                        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+                        break;
+                    }
+                }
+            }
             new DispatcherHandler(metaWrapper).handle();
         } catch (IOException e) {
             throw new RuntimeException(e);
