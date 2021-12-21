@@ -183,6 +183,9 @@ public class ResponseImpl implements Response {
 
     @Override
     public byte[] bodyAsBytes() throws IOException {
+        if(null==responseMeta.inputStream){
+            throw new IOException("http请求响应输入流获取失败!");
+        }
         Path tempFilePath = Files.createTempFile("QuickHttp2.",".response");
         Files.copy(responseMeta.inputStream,tempFilePath,StandardCopyOption.REPLACE_EXISTING);
         responseMeta.body = Files.readAllBytes(tempFilePath);

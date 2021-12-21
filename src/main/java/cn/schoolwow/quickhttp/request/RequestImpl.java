@@ -348,7 +348,7 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public Response execute() {
+    public Response execute() throws IOException{
         MetaWrapper metaWrapper = new MetaWrapper(requestMeta,this,clientConfig);
         try {
             //判断是否要打开限制头部
@@ -361,8 +361,6 @@ public class RequestImpl implements Request {
                 }
             }
             new DispatcherHandler(metaWrapper).handle();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }finally {
             if(null!=metaWrapper.pw){
                 metaWrapper.pw.flush();
@@ -382,8 +380,8 @@ public class RequestImpl implements Request {
             }
         }
         clientConfig.threadPoolExecutor.execute(() -> {
-            Response response = execute();
             try {
+                Response response = execute();
                 responseListener.executeSuccess(this, response);
             } catch (IOException e) {
                 e.printStackTrace();

@@ -357,7 +357,7 @@ public interface Request extends Cloneable {
     /**
      * 执行请求
      */
-    Response execute();
+    Response execute() throws IOException;
 
     /**
      * 异步执行请求

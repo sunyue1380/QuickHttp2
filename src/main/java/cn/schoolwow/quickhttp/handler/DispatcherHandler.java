@@ -32,8 +32,8 @@ public class DispatcherHandler extends AbstractHandler{
             quickHttpClientListener.beforeExecute(metaWrapper.request);
         }
         //执行请求
+        int retryTimes = 1;
         try {
-            int retryTimes = 1;
             while (retryTimes <= clientConfig.retryTimes) {
                 try {
                     Handler handler = new RequestHandler(metaWrapper);
@@ -48,20 +48,19 @@ public class DispatcherHandler extends AbstractHandler{
                     retryTimes++;
                 }
             }
-            if(null!=metaWrapper.response){
-                //请求执行成功
-                for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
-                    quickHttpClientListener.executeSuccess(metaWrapper.request, metaWrapper.response);
-                }
+            //请求执行成功
+            for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
+                quickHttpClientListener.executeSuccess(metaWrapper.request, metaWrapper.response);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             //请求执行失败
             for (QuickHttpClientListener quickHttpClientListener : quickHttpClientListenerList) {
                 quickHttpClientListener.executeFail(metaWrapper.request, e);
             }
+            throw e;
+        }finally {
+            System.setProperty("sun.net.http.allowRestrictedHeaders", "false");
         }
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "false");
         return null;
     }
 
