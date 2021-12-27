@@ -2,7 +2,8 @@
 
 简单易用的Java Http客户端.
 
-[中文文档](/zh-cn/)/[English](/en/)
+[中文文档](https://quickhttp.schoolwow.cn/#/zh-cn/)
+/[English](https://quickhttp.schoolwow.cn/#/en/)
 
 # 反馈
 
