@@ -1,29 +1,23 @@
 # CookieOption
 
-CookieOption定义了对于Cookie的相关操作.每个QuickHttpClient有各自独立的Cookie管理策略,存储.
+QuickHttp支持自动管理Cookie
 
-## 获取CookieOption
+## 默认CookieOption
 
 ```java
-CookieOption cookieOption = QuickHttp.newQuickHttpClient().clientConfig().cookieOption();
+//获取默认的Cookie选项
+CookieOption cookieOption = QuickHttp.clientConfig().cookieOption();
+//获取管理的所有域名Cookie
+List<HttpCookie> httpCookieList = cookieOption.getCookieList();
+//获取baidu.com域名下的所有Cookie
+List<HttpCookie> baiduCookieList = cookieOption.getCookieList("baidu.com");
+//添加Cookie
+cookieOption.addCookieString("baidu.com","cookie1=value1;cookie2=value2;");
+//移除baidu.com域名下的所有Cookie
+cookieOption.removeCookie("baidu.com");
+//设置Cookie策略
+cookieOption.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+//更多CookieOption操作......
 ```
 
-## 接口方法
-
-|方法|含义|
-|---|---|
-|hasCookie(String domain, String name)|cookie是否存在|
-|getCookie(String domain, String name)|获取cookie|
-|getCookieList(String domain)|获取指定域名下的Cookie列表|
-|getCookieList()|获取所有Cookie|
-|addCookieString(String domain, String cookie)|添加Cookie,**从v2.0.1开始将domain参数作为第一个参数**|
-|addCookie(String domain, String name, String value)|添加Cookie,**从v2.0.1开始将domain参数作为第一个参数**|
-|addCookie(HttpCookie httpCookie)|添加Cookie|
-|addCookie(List<HttpCookie> httpCookieList)|添加Cookie列表|
-|removeCookie(String domain)|删除指定域名下所有Cookie|
-|removeCookie(String domain, String name)|删除指定域名下的指定Cookie|
-|removeCookie(HttpCookie httpCookie)|删除指定Cookie|
-|clearCookieList()|清空Cookie列表|
-|setCookiePolicy(CookiePolicy cookiePolicy)|设置Cookie策略|
-|cookieManager|获取CookieManage对象|
-
+设置完成Cookie后，QuickHttp发送的http请求会根据请求域名自动添加上``Cookie``头部.
