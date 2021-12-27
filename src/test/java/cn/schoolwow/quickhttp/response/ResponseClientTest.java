@@ -31,7 +31,7 @@ public class ResponseClientTest {
     }
 
     @Test
-    public void statusCode() {
+    public void statusCode() throws IOException {
         Response response = client.connect("/statusCode")
                 .method(Request.Method.GET)
                 .execute();

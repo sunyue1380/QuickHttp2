@@ -29,7 +29,7 @@ public class ResponseTest {
     }
 
     @Test
-    public void statusCode() {
+    public void statusCode() throws IOException {
         Response response = QuickHttp.connect("/statusCode")
                 .method(Request.Method.GET)
                 .execute();
@@ -39,7 +39,7 @@ public class ResponseTest {
     }
 
     @Test
-    public void redirect() {
+    public void redirect() throws IOException {
         Response response = QuickHttp.connect("/redirect")
                 .method(Request.Method.GET)
                 .execute();
