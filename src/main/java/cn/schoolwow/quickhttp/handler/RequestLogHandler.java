@@ -61,14 +61,13 @@ public class RequestLogHandler extends AbstractHandler{
                     || responseMeta.contentType.contains("charset")
             ) {
                 InputStream inputStream = response.bodyStream();
-                if(null==inputStream){
+                if(null==inputStream||response.contentLength()<0){
                     contentBuilder.append("\n[响应内容无法获取]");
+                }else if(response.contentLength()==0){
+                    contentBuilder.append("\n[响应内容为空]");
                 }else{
-                    inputStream.mark(1024);
-                    int length = 1024;
-                    if(response.contentLength()>0){
-                        length = (int) response.contentLength();
-                    }
+                    int length = (int) Math.min(1024,response.contentLength());
+                    inputStream.mark(length);
                     byte[] bytes = new byte[length];
                     length = inputStream.read(bytes,0,bytes.length);
                     if(length>0){
