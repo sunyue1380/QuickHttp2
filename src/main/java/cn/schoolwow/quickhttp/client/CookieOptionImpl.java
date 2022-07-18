@@ -142,7 +142,18 @@ public class CookieOptionImpl implements CookieOption {
         if (httpCookie.getMaxAge() <= 0) {
             httpCookie.setMaxAge(3600);
         }
-        cookieManager.getCookieStore().add(null, httpCookie);
+        List<HttpCookie> httpCookieList = cookieManager.getCookieStore().getCookies();
+        boolean httpCookieExists = false;
+        for(HttpCookie httpCookie1:httpCookieList){
+            if(httpCookie.getDomain().equalsIgnoreCase(httpCookie1.getDomain())&&httpCookie.getName().equalsIgnoreCase(httpCookie1.getName())){
+                httpCookie1.setValue(httpCookie.getValue());
+                httpCookieExists = true;
+                break;
+            }
+        }
+        if(!httpCookieExists){
+            cookieManager.getCookieStore().add(null, httpCookie);
+        }
     }
 
     @Override
