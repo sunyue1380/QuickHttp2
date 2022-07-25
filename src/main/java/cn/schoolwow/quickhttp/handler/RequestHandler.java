@@ -105,7 +105,6 @@ public class RequestHandler extends AbstractHandler{
                     for(String cookie:cookieList){
                         builder.append(" "+cookie+";");
                     }
-                    httpURLConnection.setRequestProperty("Cookie",builder.toString());
                     log(LogLevel.TRACE,"[设置Cookie头部]{}",builder.toString());
                 }
             }
