@@ -302,6 +302,17 @@ public class ResponseImpl implements Response {
     }
 
     @Override
+    public void close() {
+        try {
+            if (null != responseMeta.inputStream) {
+                responseMeta.inputStream.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public void disconnect() {
         try {
             if (null != responseMeta.inputStream) {

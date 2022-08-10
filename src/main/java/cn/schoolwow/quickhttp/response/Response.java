@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-public interface Response {
+public interface Response extends AutoCloseable{
     /**
      * 获取返回地址
      */
@@ -156,6 +156,11 @@ public interface Response {
      * 使用事件监听机制获取处理DOM树
      */
     DocumentParser parser() throws IOException;
+
+    /**
+     * 关闭连接
+     */
+    void close();
 
     /**
      * 断开连接
