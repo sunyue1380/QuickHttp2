@@ -190,6 +190,7 @@ public class ResponseImpl implements Response {
         Files.copy(responseMeta.inputStream,tempFilePath,StandardCopyOption.REPLACE_EXISTING);
         responseMeta.body = Files.readAllBytes(tempFilePath);
         Files.deleteIfExists(tempFilePath);
+        close();
         return responseMeta.body;
     }
 
@@ -261,6 +262,7 @@ public class ResponseImpl implements Response {
                 }
             }
         }
+        close();
         if(Thread.currentThread().isInterrupted()){
             return;
         }

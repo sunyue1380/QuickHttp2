@@ -42,30 +42,11 @@ public class ResponseHandler extends AbstractHandler{
 
     @Override
     public Handler handle() throws IOException {
-        boolean statusError = false;
-        if(requestMeta.ignoreHttpErrors||clientConfig.ignoreHttpErrors){
-            try {
-                getStatusCode();
-            }catch (FileNotFoundException e){
-                statusError = true;
-                responseMeta.statusCode = 404;
-                responseMeta.statusMessage = "Not Found";
-                log(LogLevel.ERROR,"链接404");
-            }catch (IOException e){
-                statusError = true;
-                String message = e.getMessage();
-                if(message.startsWith("Server returned HTTP response code: ")){
-                    responseMeta.statusCode = Integer.parseInt(message.substring("Server returned HTTP response code: ".length(),message.indexOf(" for URL: ")));
-                    responseMeta.statusMessage = "";
-                }
-                e.printStackTrace(metaWrapper.pw);
-            }
-        }else{
-            getStatusCode();
-        }
+        getStatusCode();
         getRequestHeader();
         getResponseHeader();
-        if(!statusError){
+        boolean ignoreHttpErrors = requestMeta.ignoreHttpErrors||clientConfig.ignoreHttpErrors;
+        if(!ignoreHttpErrors&&responseMeta.statusCode<400){
             getBody();
             getCharset();
         }
