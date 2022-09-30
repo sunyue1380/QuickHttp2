@@ -25,7 +25,7 @@ public class RequestLogHandler extends AbstractHandler{
     @Override
     public Handler handle() throws IOException {
         if (!requestMeta.ignoreHttpErrors) {
-            if (responseMeta.statusCode < 200 || responseMeta.statusCode >= 400) {
+            if (responseMeta.statusCode >= 400) {
                 logger.warn("[请求与响应]{}\n{}",requestMeta.statusLine, getRequestAndResponseLog());
                 throw new IOException("http状态异常!状态码:" + responseMeta.statusCode + ",地址:" + requestMeta.url);
             }

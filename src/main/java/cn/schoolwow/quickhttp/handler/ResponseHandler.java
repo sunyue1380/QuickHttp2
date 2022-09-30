@@ -45,11 +45,8 @@ public class ResponseHandler extends AbstractHandler{
         getStatusCode();
         getRequestHeader();
         getResponseHeader();
-        boolean ignoreHttpErrors = requestMeta.ignoreHttpErrors||clientConfig.ignoreHttpErrors;
-        if(!ignoreHttpErrors&&responseMeta.statusCode<400){
-            getBody();
-            getCharset();
-        }
+        getBody();
+        getCharset();
         return new EventSourceHandler(metaWrapper);
     }
 
