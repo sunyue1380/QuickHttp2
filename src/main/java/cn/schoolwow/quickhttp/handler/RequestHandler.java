@@ -1,7 +1,6 @@
 package cn.schoolwow.quickhttp.handler;
 
 import cn.schoolwow.quickhttp.domain.ClientConfig;
-import cn.schoolwow.quickhttp.domain.LogLevel;
 import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.domain.RequestMeta;
 import cn.schoolwow.quickhttp.request.Request;
@@ -75,7 +74,7 @@ public class RequestHandler extends AbstractHandler{
         final HttpURLConnection httpURLConnection = (HttpURLConnection) (
                 requestMeta.proxy == null ? u.openConnection() : u.openConnection(requestMeta.proxy)
         );
-        log(LogLevel.DEBUG,"[请求行]{} {},代理:{}", requestMeta.method.name(), u, requestMeta.proxy == null ? "无" : requestMeta.proxy.address());
+        logger.debug("[请求行]{} {},代理:{}", requestMeta.method.name(), u, requestMeta.proxy == null ? "无" : requestMeta.proxy.address());
         //判断是否https
         if (httpURLConnection instanceof HttpsURLConnection) {
             ((HttpsURLConnection) httpURLConnection).setSSLSocketFactory(clientConfig.sslSocketFactory);
@@ -105,7 +104,7 @@ public class RequestHandler extends AbstractHandler{
                     for(String cookie:cookieList){
                         builder.append(" "+cookie+";");
                     }
-                    log(LogLevel.TRACE,"[设置Cookie头部]{}",builder.toString());
+                    logger.trace("[设置Cookie头部]{}",builder.toString());
                 }
             }
         } catch (URISyntaxException e) {

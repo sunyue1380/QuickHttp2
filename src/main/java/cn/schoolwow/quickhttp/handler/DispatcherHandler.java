@@ -1,6 +1,5 @@
 package cn.schoolwow.quickhttp.handler;
 
-import cn.schoolwow.quickhttp.domain.LogLevel;
 import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.domain.QuickHttpConfig;
 import cn.schoolwow.quickhttp.listener.QuickHttpClientListener;
@@ -42,7 +41,7 @@ public class DispatcherHandler extends AbstractHandler{
                     }
                     break;
                 } catch (SocketTimeoutException | ConnectException e) {
-                    log(LogLevel.WARN,"[链接超时]重试{}/{},原因:{},地址:{}", retryTimes, clientConfig.retryTimes, e.getMessage(), requestMeta.url);
+                    logger.warn("[链接超时]重试{}/{},原因:{},地址:{}", retryTimes, clientConfig.retryTimes, e.getMessage(), requestMeta.url);
                     requestMeta.connectTimeoutMillis = requestMeta.connectTimeoutMillis*2;
                     requestMeta.readTimeoutMillis = requestMeta.readTimeoutMillis*2;
                     retryTimes++;
@@ -68,14 +67,14 @@ public class DispatcherHandler extends AbstractHandler{
      * 检查请求数据是否有误
      */
     private void checkRequestMeta() {
-        log(LogLevel.DEBUG,"检查请求元数据!");
+        logger.debug("检查请求元数据!");
         if (null == requestMeta.url) {
-            log(LogLevel.DEBUG,"url不能为空!");
+            logger.debug("url不能为空!");
             throw new IllegalArgumentException("url不能为空!");
         }
         String protocol = requestMeta.url.getProtocol();
         if (!protocol.startsWith("http")) {
-            log(LogLevel.DEBUG,"当前只支持http和https协议.当前url:" + requestMeta.url);
+            logger.debug("当前只支持http和https协议.当前url:" + requestMeta.url);
             throw new IllegalArgumentException("当前只支持http和https协议.当前url:" + requestMeta.url);
         }
         if (null == requestMeta.proxy) {

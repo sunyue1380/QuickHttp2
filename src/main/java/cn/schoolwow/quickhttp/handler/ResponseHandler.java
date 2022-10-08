@@ -3,7 +3,6 @@ package cn.schoolwow.quickhttp.handler;
 import cn.schoolwow.quickhttp.document.Document;
 import cn.schoolwow.quickhttp.document.element.Element;
 import cn.schoolwow.quickhttp.document.element.Elements;
-import cn.schoolwow.quickhttp.domain.LogLevel;
 import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.response.ResponseImpl;
 import cn.schoolwow.quickhttp.response.SpeedLimitInputStream;
@@ -15,7 +14,6 @@ import sun.net.www.protocol.https.HttpsURLConnectionImpl;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -159,7 +157,7 @@ public class ResponseHandler extends AbstractHandler{
      * */
     private void getBody() throws IOException {
         if(!requestMeta.ignoreHttpErrors&&!clientConfig.ignoreHttpErrors&&responseMeta.statusCode>=400){
-            log(LogLevel.WARN,"[跳过获取请求体]当前状态码无法获取请求体,当前状态码:{}",responseMeta.statusCode);
+            logger.warn("[跳过获取请求体]当前状态码无法获取请求体,当前状态码:{}",responseMeta.statusCode);
             return;
         }
         try {
@@ -176,12 +174,7 @@ public class ResponseHandler extends AbstractHandler{
             responseMeta.inputStream = new BufferedInputStream(inputStream);
             responseMeta.inputStream = new SpeedLimitInputStream(responseMeta.inputStream);
         } catch (IOException e) {
-            log(LogLevel.WARN,"读取输入流失败");
-            if(null!=metaWrapper.pw){
-                e.printStackTrace(metaWrapper.pw);
-            }else{
-                e.printStackTrace();
-            }
+            logger.warn("读取输入流失败");
         }
     }
 

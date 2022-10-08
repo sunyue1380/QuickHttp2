@@ -342,12 +342,6 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public Request logFilePath(String logFilePath) {
-        requestMeta.logFilePath = logFilePath;
-        return this;
-    }
-
-    @Override
     public Response execute() throws IOException{
         MetaWrapper metaWrapper = new MetaWrapper(requestMeta,this,clientConfig);
         try {
@@ -362,10 +356,6 @@ public class RequestImpl implements Request {
             }
             new DispatcherHandler(metaWrapper).handle();
         }finally {
-            if(null!=metaWrapper.pw){
-                metaWrapper.pw.flush();
-                metaWrapper.pw.close();
-            }
         }
         return metaWrapper.response;
     }

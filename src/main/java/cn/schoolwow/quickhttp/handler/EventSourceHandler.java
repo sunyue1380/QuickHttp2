@@ -1,6 +1,5 @@
 package cn.schoolwow.quickhttp.handler;
 
-import cn.schoolwow.quickhttp.domain.LogLevel;
 import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.response.EventSource;
 import org.slf4j.Logger;
@@ -40,7 +39,7 @@ public class EventSourceHandler extends AbstractHandler{
         if(null==requestMeta.eventSourceConsumer){
             return;
         }
-        log(LogLevel.TRACE,"[处理EventSource]Content-Type:{}",responseMeta.contentType);
+        logger.trace("[处理EventSource]Content-Type:{}",responseMeta.contentType);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(responseMeta.inputStream, StandardCharsets.UTF_8));
         EventSource eventSource = null;
         String line = bufferedReader.readLine();

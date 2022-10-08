@@ -1,6 +1,5 @@
 package cn.schoolwow.quickhttp.handler;
 
-import cn.schoolwow.quickhttp.domain.LogLevel;
 import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,7 @@ public class RequestLogHandler extends AbstractHandler{
                 throw new IOException("http状态异常!状态码:" + responseMeta.statusCode + ",地址:" + requestMeta.url);
             }
         }
-        log(LogLevel.DEBUG,"[请求与响应]{}\n{}",requestMeta.statusLine, getRequestAndResponseLog());
+        logger.debug("[请求与响应]{}\n{}",requestMeta.statusLine, getRequestAndResponseLog());
         return new RedirectHandler(metaWrapper);
     }
 

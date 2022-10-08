@@ -327,11 +327,6 @@ public class ResponseImpl implements Response {
     }
 
     @Override
-    public String logFilePath() {
-        return requestMeta.logFilePath;
-    }
-
-    @Override
     public ResponseMeta responseMeta() {
         return responseMeta;
     }
