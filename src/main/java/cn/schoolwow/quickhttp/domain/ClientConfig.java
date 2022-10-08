@@ -99,11 +99,6 @@ public class ClientConfig {
     public List<QuickHttpClientListener> quickHttpClientListenerList = new ArrayList<>();
 
     /**
-     * 日志文件夹路径
-     */
-    public String logDirectoryPath;
-
-    /**
      * Cookie管理
      */
     public transient CookieManager cookieManager = new CookieManager();

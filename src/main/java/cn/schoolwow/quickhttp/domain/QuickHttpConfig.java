@@ -49,7 +49,7 @@ public class QuickHttpConfig {
                     StandardWatchEventKinds.ENTRY_MODIFY,
                     StandardWatchEventKinds.ENTRY_DELETE,
             });
-            logger.info("[监听配置文件路径]{}", configPath);
+            logger.info("监听配置文件路径:{}", configPath);
             fileWatchThreadPool.execute(() -> {
                 applyConfiguration();
                 while (true) {
@@ -79,13 +79,12 @@ public class QuickHttpConfig {
                         //监听复位
                         watchKey.reset();
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        logger.error("文件监听发生异常", e);
                     }
                 }
             });
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.warn("[加载监听服务失败]{}", e.getMessage());
+            logger.error("加载监听服务失败", e);
         }
     }
 
@@ -108,7 +107,7 @@ public class QuickHttpConfig {
                 result.append(LocalDateTime.now() + " [应用全局代理]" + QuickHttpConfig.proxy + "\n");
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("读取配置文件异常", e);
             result.append(LocalDateTime.now() + " [读取配置文件异常]" + e.getMessage() + "\n");
         } finally {
             try {
@@ -116,7 +115,7 @@ public class QuickHttpConfig {
                     Files.write(configResultPath, result.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("写入文件配置失败", e);
             }
         }
     }

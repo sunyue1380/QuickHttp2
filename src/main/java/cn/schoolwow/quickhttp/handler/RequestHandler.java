@@ -1,35 +1,27 @@
 package cn.schoolwow.quickhttp.handler;
 
-import cn.schoolwow.quickhttp.domain.ClientConfig;
-import cn.schoolwow.quickhttp.domain.MetaWrapper;
-import cn.schoolwow.quickhttp.domain.RequestMeta;
+import cn.schoolwow.quickhttp.domain.Client;
+import cn.schoolwow.quickhttp.domain.ResponseMeta;
 import cn.schoolwow.quickhttp.request.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.io.*;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class RequestHandler extends AbstractHandler{
+public class RequestHandler implements Handler{
     private static Logger logger = LoggerFactory.getLogger(RequestHandler.class);
     private static ThreadLocal<StringBuilder> builderThreadLocal = new ThreadLocal<>();
     private static final char[] mimeBoundaryChars =
             "-_1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     private static final int boundaryLength = 32;
 
-    public RequestHandler(MetaWrapper metaWrapper) {
-        super(metaWrapper);
+    public RequestHandler() {
         StringBuilder builder = builderThreadLocal.get();
         if(null==builder){
             builderThreadLocal.set(new StringBuilder());
@@ -37,142 +29,155 @@ public class RequestHandler extends AbstractHandler{
     }
 
     @Override
-    public Handler handle() throws IOException {
-        HttpURLConnection httpURLConnection = createHttpUrlConnection(metaWrapper);
-        metaWrapper.responseMeta.httpURLConnection = httpURLConnection;
-        return new ResponseHandler(metaWrapper);
+    public Handler handle(Client client) throws IOException, URISyntaxException {
+        handleParameterMap(client);
+        handleProxyAndHeader(client);
+        handleRequestBody(client);
+        return new ResponseHandler();
     }
 
     /**
-     * 创建HttpUrlConnection对象
-     */
-    private HttpURLConnection createHttpUrlConnection(MetaWrapper metaWrapper) throws IOException {
-        RequestMeta requestMeta = metaWrapper.requestMeta;
-        ClientConfig clientConfig = metaWrapper.clientConfig;
-
+     * 处理url表单参数
+     * */
+    private void handleParameterMap(Client client) throws UnsupportedEncodingException, MalformedURLException {
+        if (client.requestMeta.parameterMap.isEmpty()) {
+            return;
+        }
         //添加路径请求参数
-        if (!requestMeta.parameterMap.isEmpty()) {
-            StringBuilder parameterBuilder = builderThreadLocal.get();
-            parameterBuilder.setLength(0);
-            Set<Map.Entry<String, String>> entrySet = requestMeta.parameterMap.entrySet();
-            for (Map.Entry<String, String> entry : entrySet) {
-                String value = entry.getValue();
-                if (null != value) {
-                    value = URLEncoder.encode(value, requestMeta.charset);
-                }
-                parameterBuilder.append(URLEncoder.encode(entry.getKey(), requestMeta.charset) + "=" + value + "&");
+        StringBuilder parameterBuilder = builderThreadLocal.get();
+        parameterBuilder.setLength(0);
+        Set<Map.Entry<String, String>> entrySet = client.requestMeta.parameterMap.entrySet();
+        for (Map.Entry<String, String> entry : entrySet) {
+            String value = entry.getValue();
+            if (null != value) {
+                value = URLEncoder.encode(value, client.requestMeta.charset);
             }
-            parameterBuilder.deleteCharAt(parameterBuilder.length() - 1);
-            if (requestMeta.url.toString().contains("?")) {
-                parameterBuilder.insert(0, "&");
-            } else {
-                parameterBuilder.insert(0, "?");
-            }
-            requestMeta.url = new URL(requestMeta.url.toString() + parameterBuilder.toString());
+            parameterBuilder.append(URLEncoder.encode(entry.getKey(), client.requestMeta.charset) + "=" + value + "&");
         }
-        URL u = requestMeta.url;
-        final HttpURLConnection httpURLConnection = (HttpURLConnection) (
-                requestMeta.proxy == null ? u.openConnection() : u.openConnection(requestMeta.proxy)
+        parameterBuilder.deleteCharAt(parameterBuilder.length() - 1);
+        if (client.requestMeta.url.toString().contains("?")) {
+            parameterBuilder.insert(0, "&");
+        } else {
+            parameterBuilder.insert(0, "?");
+        }
+        client.requestMeta.url = new URL(client.requestMeta.url.toString() + parameterBuilder.toString());
+    }
+
+    /**
+     * 处理代理和头部
+     * */
+    private void handleProxyAndHeader(Client client) throws IOException, URISyntaxException {
+        URL u = client.requestMeta.url;
+        client.responseMeta = new ResponseMeta();
+        client.responseMeta.httpURLConnection = (HttpURLConnection) (
+                client.requestMeta.proxy == null ? u.openConnection() : u.openConnection(client.requestMeta.proxy)
         );
-        logger.debug("[请求行]{} {},代理:{}", requestMeta.method.name(), u, requestMeta.proxy == null ? "无" : requestMeta.proxy.address());
-        //判断是否https
-        if (httpURLConnection instanceof HttpsURLConnection) {
-            ((HttpsURLConnection) httpURLConnection).setSSLSocketFactory(clientConfig.sslSocketFactory);
-            ((HttpsURLConnection) httpURLConnection).setHostnameVerifier(clientConfig.hostnameVerifier);
+        logger.debug("请求行:{} {}", client.requestMeta.method.name(), u);
+        if(null!=client.requestMeta.proxy){
+            logger.debug("使用代理:{}", client.requestMeta.proxy.address());
         }
-        httpURLConnection.setRequestMethod(requestMeta.method.name());
-        httpURLConnection.setConnectTimeout(requestMeta.connectTimeoutMillis);
-        httpURLConnection.setReadTimeout(requestMeta.readTimeoutMillis);
-        httpURLConnection.setInstanceFollowRedirects(false);
+        //判断是否https
+        if (client.responseMeta.httpURLConnection instanceof HttpsURLConnection) {
+            ((HttpsURLConnection) client.responseMeta.httpURLConnection).setSSLSocketFactory(client.clientConfig.sslSocketFactory);
+            ((HttpsURLConnection) client.responseMeta.httpURLConnection).setHostnameVerifier(client.clientConfig.hostnameVerifier);
+        }
+        client.responseMeta.httpURLConnection.setRequestMethod(client.requestMeta.method.name());
+        client.responseMeta.httpURLConnection.setConnectTimeout(client.requestMeta.connectTimeoutMillis);
+        client.responseMeta.httpURLConnection.setReadTimeout(client.requestMeta.readTimeoutMillis);
+        client.responseMeta.httpURLConnection.setInstanceFollowRedirects(false);
         //设置头部
-        {
-            Set<Map.Entry<String, List<String>>> entrySet = requestMeta.headerMap.entrySet();
-            for(Map.Entry<String,List<String>> entry:entrySet){
-                for(String value:entry.getValue()){
-                    httpURLConnection.addRequestProperty(entry.getKey(), value);
-                }
+        Set<Map.Entry<String, List<String>>> entrySet = client.requestMeta.headerMap.entrySet();
+        for(Map.Entry<String,List<String>> entry:entrySet){
+            for(String value:entry.getValue()){
+                logger.trace("添加头部-{}:{}", entry.getKey(), value);
+                client.responseMeta.httpURLConnection.addRequestProperty(entry.getKey(), value);
             }
+        }
+        if (null != client.requestMeta.contentType) {
+            client.responseMeta.httpURLConnection.setRequestProperty("Content-Type", client.requestMeta.contentType);
+            logger.trace("设置Content-Type：{}", client.requestMeta.contentType);
         }
         //设置Cookie
-        try {
-            Map<String,List<String>> cookieHeaderMap = clientConfig.cookieManager.get(requestMeta.url.toURI(), requestMeta.headerMap);
-            if(cookieHeaderMap.containsKey("Cookie")){
-                List<String> cookieList = cookieHeaderMap.get("Cookie");
-                if(cookieList.size()>0){
-                    StringBuilder builder = builderThreadLocal.get();
-                    builder.setLength(0);
-                    for(String cookie:cookieList){
-                        builder.append(" "+cookie+";");
-                    }
-                    logger.trace("[设置Cookie头部]{}",builder.toString());
-                }
-            }
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        Map<String,List<String>> cookieHeaderMap = client.clientConfig.cookieManager.get(client.requestMeta.url.toURI(), client.requestMeta.headerMap);
+        if(!cookieHeaderMap.containsKey("Cookie")){
+            return;
         }
-        //执行请求
-        httpURLConnection.setDoInput(true);
+        List<String> cookieList = cookieHeaderMap.get("Cookie");
+        if(null==cookieList||cookieList.isEmpty()){
+            return;
+        }
         StringBuilder builder = builderThreadLocal.get();
         builder.setLength(0);
-        if (null != requestMeta.contentType) {
-            httpURLConnection.setRequestProperty("Content-Type", requestMeta.contentType);
+        for(String cookie:cookieList){
+            builder.append(" "+cookie+";");
         }
-        if (requestMeta.method.hasBody() && (!requestMeta.dataFileMap.isEmpty() || null != requestMeta.requestBody || !requestMeta.dataMap.isEmpty())) {
+        logger.trace("设置Cookie头部:{}",builder.toString());
+    }
+
+    /**
+     * 写入请求体内容
+     * */
+    private void handleRequestBody(Client client) throws IOException {
+        //执行请求
+        client.responseMeta.httpURLConnection.setDoInput(true);
+        StringBuilder builder = builderThreadLocal.get();
+        builder.setLength(0);
+        if (client.requestMeta.method.hasBody() && (!client.requestMeta.dataFileMap.isEmpty() || null != client.requestMeta.requestBody || !client.requestMeta.dataMap.isEmpty())) {
             //优先级 dataFile > requestBody > dataMap
-            if (Request.ContentType.MULTIPART_FORMDATA.equals(requestMeta.userContentType) || !requestMeta.dataFileMap.isEmpty()) {
-                if (null == requestMeta.boundary) {
-                    requestMeta.boundary = mimeBoundary();
+            if (Request.ContentType.MULTIPART_FORMDATA.equals(client.requestMeta.userContentType) || !client.requestMeta.dataFileMap.isEmpty()) {
+                if (null == client.requestMeta.boundary) {
+                    client.requestMeta.boundary = mimeBoundary();
                 }
-                httpURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + requestMeta.boundary);
-                if(!requestMeta.dataFileMap.isEmpty()){
-                    builder.append("[MultipartFile]" + requestMeta.dataFileMap);
+                client.responseMeta.httpURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + client.requestMeta.boundary);
+                if(!client.requestMeta.dataFileMap.isEmpty()){
+                    builder.append("[MultipartFile]" + client.requestMeta.dataFileMap);
                 }
-                if(!requestMeta.dataMap.isEmpty()){
-                    builder.append("[Multipart]" + requestMeta.dataMap);
+                if(!client.requestMeta.dataMap.isEmpty()){
+                    builder.append("[Multipart]" + client.requestMeta.dataMap);
                 }
-            } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || (requestMeta.requestBody != null && requestMeta.requestBody.length > 0)) {
-                if (null == requestMeta.contentType) {
-                    httpURLConnection.setRequestProperty("Content-Type", (requestMeta.userContentType==null?"application/json":requestMeta.userContentType.value) + "; charset=" + requestMeta.charset);
+            } else if (Request.ContentType.APPLICATION_JSON.equals(client.requestMeta.userContentType) || (client.requestMeta.requestBody != null && client.requestMeta.requestBody.length > 0)) {
+                if (null == client.requestMeta.contentType) {
+                    client.responseMeta.httpURLConnection.setRequestProperty("Content-Type", (client.requestMeta.userContentType==null?"application/json":client.requestMeta.userContentType.value) + "; charset=" + client.requestMeta.charset);
                 }
-                builder.append(new String(requestMeta.requestBody,requestMeta.charset));
-            } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
-                httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + requestMeta.charset);
-                if (!requestMeta.dataMap.isEmpty()) {
+                builder.append(new String(client.requestMeta.requestBody,client.requestMeta.charset));
+            } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(client.requestMeta.userContentType) || !client.requestMeta.dataMap.isEmpty()) {
+                client.responseMeta.httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + client.requestMeta.charset);
+                if (!client.requestMeta.dataMap.isEmpty()) {
                     StringBuilder formBuilder = new StringBuilder();
-                    Set<Map.Entry<String, String>> entrySet = requestMeta.dataMap.entrySet();
+                    Set<Map.Entry<String, String>> entrySet = client.requestMeta.dataMap.entrySet();
                     for (Map.Entry<String, String> entry : entrySet) {
                         String value = entry.getValue();
                         if (null != value) {
-                            value = URLEncoder.encode(value, requestMeta.charset);
+                            value = URLEncoder.encode(value, client.requestMeta.charset);
                         }
-                        formBuilder.append(URLEncoder.encode(entry.getKey(), requestMeta.charset) + "=" + value + "&");
+                        formBuilder.append(URLEncoder.encode(entry.getKey(), client.requestMeta.charset) + "=" + value + "&");
                     }
                     formBuilder.deleteCharAt(formBuilder.length() - 1);
-                    requestMeta.requestBody = formBuilder.toString().getBytes(Charset.forName(requestMeta.charset));
+                    client.requestMeta.requestBody = formBuilder.toString().getBytes(Charset.forName(client.requestMeta.charset));
                 }
-                builder.append("[Form]"+requestMeta.dataMap.toString());
+                builder.append("[Form]"+client.requestMeta.dataMap.toString());
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            final BufferedWriter w = new BufferedWriter(new OutputStreamWriter(baos, requestMeta.charset));
-            if (Request.ContentType.MULTIPART_FORMDATA.equals(requestMeta.userContentType) || !requestMeta.dataFileMap.isEmpty()) {
-                if (!requestMeta.dataMap.isEmpty()) {
-                    Set<Map.Entry<String, String>> entrySet = requestMeta.dataMap.entrySet();
+            final BufferedWriter w = new BufferedWriter(new OutputStreamWriter(baos, client.requestMeta.charset));
+            if (Request.ContentType.MULTIPART_FORMDATA.equals(client.requestMeta.userContentType) || !client.requestMeta.dataFileMap.isEmpty()) {
+                if (!client.requestMeta.dataMap.isEmpty()) {
+                    Set<Map.Entry<String, String>> entrySet = client.requestMeta.dataMap.entrySet();
                     for (Map.Entry<String, String> entry : entrySet) {
-                        w.write("--" + requestMeta.boundary + "\r\n");
+                        w.write("--" + client.requestMeta.boundary + "\r\n");
                         w.write("Content-Disposition: form-data; name=\"" + entry.getKey().replace("\"", "%22") + "\"\r\n");
                         w.write("\r\n");
                         w.write(entry.getValue());
                         w.write("\r\n");
                     }
                 }
-                Set<Map.Entry<String, Collection<Path>>> entrySet = requestMeta.dataFileMap.entrySet();
+                Set<Map.Entry<String, Collection<Path>>> entrySet = client.requestMeta.dataFileMap.entrySet();
                 for (Map.Entry<String, Collection<Path>> entry : entrySet) {
                     Collection<Path> pathCollection = entry.getValue();
                     for(Path file:pathCollection){
                         String name = entry.getKey().replace("\"", "%22");
 
-                        w.write("--" + requestMeta.boundary + "\r\n");
+                        w.write("--" + client.requestMeta.boundary + "\r\n");
                         w.write("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + file.getFileName().toString().replace("\"", "%22") + "\"\r\n");
                         w.write("Content-Type: " + Files.probeContentType(file) + "\r\n");
                         w.write("\r\n");
@@ -182,26 +187,25 @@ public class RequestHandler extends AbstractHandler{
                         w.write("\r\n");
                     }
                 }
-                w.write("--" + requestMeta.boundary + "--\r\n");
-            } else if (Request.ContentType.APPLICATION_JSON.equals(requestMeta.userContentType) || requestMeta.requestBody != null && !requestMeta.requestBody.equals("")) {
-                baos.write(requestMeta.requestBody);
-            } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(requestMeta.userContentType) || !requestMeta.dataMap.isEmpty()) {
-                if (null != requestMeta.requestBody) {
-                    baos.write(requestMeta.requestBody);
+                w.write("--" + client.requestMeta.boundary + "--\r\n");
+            } else if (Request.ContentType.APPLICATION_JSON.equals(client.requestMeta.userContentType) || client.requestMeta.requestBody != null && !client.requestMeta.requestBody.equals("")) {
+                baos.write(client.requestMeta.requestBody);
+            } else if (Request.ContentType.APPLICATION_X_WWW_FORM_URLENCODED.equals(client.requestMeta.userContentType) || !client.requestMeta.dataMap.isEmpty()) {
+                if (null != client.requestMeta.requestBody) {
+                    baos.write(client.requestMeta.requestBody);
                 }
             }
             w.flush();
             w.close();
             //开始正式写入数据
-            switch (requestMeta.streamingMode){
-                case FixedLength:{httpURLConnection.setFixedLengthStreamingMode(baos.size());};break;
-                case Chunked:{httpURLConnection.setChunkedStreamingMode(0);};break;
+            switch (client.requestMeta.streamingMode){
+                case FixedLength:{client.responseMeta.httpURLConnection.setFixedLengthStreamingMode(baos.size());};break;
+                case Chunked:{client.responseMeta.httpURLConnection.setChunkedStreamingMode(0);};break;
             }
-            httpURLConnection.setDoOutput(true);
-            baos.writeTo(httpURLConnection.getOutputStream());
+            client.responseMeta.httpURLConnection.setDoOutput(true);
+            baos.writeTo(client.responseMeta.httpURLConnection.getOutputStream());
         }
-        requestMeta.bodyLog = builder.toString();
-        return httpURLConnection;
+        client.requestMeta.bodyLog = builder.toString();
     }
 
     /**

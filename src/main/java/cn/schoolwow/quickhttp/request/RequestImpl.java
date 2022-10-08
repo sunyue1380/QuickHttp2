@@ -1,7 +1,7 @@
 package cn.schoolwow.quickhttp.request;
 
+import cn.schoolwow.quickhttp.domain.Client;
 import cn.schoolwow.quickhttp.domain.ClientConfig;
-import cn.schoolwow.quickhttp.domain.MetaWrapper;
 import cn.schoolwow.quickhttp.domain.RequestMeta;
 import cn.schoolwow.quickhttp.handler.DispatcherHandler;
 import cn.schoolwow.quickhttp.listener.ResponseListener;
@@ -9,6 +9,8 @@ import cn.schoolwow.quickhttp.response.EventSource;
 import cn.schoolwow.quickhttp.response.Response;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.HttpCookie;
@@ -24,31 +26,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 public class RequestImpl implements Request {
-    private static final String[] restrictedHeaders = {
-            /* Restricted by XMLHttpRequest2 */
-            //"Accept-Charset",
-            //"Accept-Encoding",
-            "Access-Control-Request-Headers",
-            "Access-Control-Request-Method",
-            "Connection", /* close is allowed */
-            "Content-Length",
-            //"Cookie",
-            //"Cookie2",
-            "Content-Transfer-Encoding",
-            //"Date",
-            "Expect",
-            "Host",
-            "Keep-Alive",
-            "Origin",
-            // "Referer",
-            // "TE",
-            "Trailer",
-            "Transfer-Encoding",
-            "Upgrade",
-            //"User-Agent",
-            "Via"
-    };
+    private Logger logger = LoggerFactory.getLogger(RequestImpl.class);
+
+
+
+    /**客户端配置*/
     private ClientConfig clientConfig;
+
+    /**请求元信息*/
     private RequestMeta requestMeta = new RequestMeta();
 
     public RequestImpl(ClientConfig clientConfig) {
@@ -70,7 +55,7 @@ public class RequestImpl implements Request {
                 requestMeta.url = new URL(url);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("设置url失败", e);
         }
         return this;
     }
@@ -342,22 +327,13 @@ public class RequestImpl implements Request {
     }
 
     @Override
-    public Response execute() throws IOException{
-        MetaWrapper metaWrapper = new MetaWrapper(requestMeta,this,clientConfig);
-        try {
-            //判断是否要打开限制头部
-            {
-                for(String restrictedHeader:restrictedHeaders){
-                    if(null!=requestMeta.headerMap.get(restrictedHeader)){
-                        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-                        break;
-                    }
-                }
-            }
-            new DispatcherHandler(metaWrapper).handle();
-        }finally {
-        }
-        return metaWrapper.response;
+    public Response execute() throws IOException {
+        Client client = new Client();
+        client.requestMeta = requestMeta;
+        client.request = this;
+        client.clientConfig = clientConfig;
+        new DispatcherHandler().handle(client);
+        return client.response;
     }
 
     @Override
@@ -374,7 +350,7 @@ public class RequestImpl implements Request {
                 Response response = execute();
                 responseListener.executeSuccess(this, response);
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("执行executeSuccess事件时发生异常", e);
             }
         });
     }
@@ -409,31 +385,4 @@ public class RequestImpl implements Request {
         return requestMeta;
     }
 
-    /**
-     * 执行重定向操作
-     * @param location 重定向地址
-     * */
-    public void redirect(String location){
-        //处理相对路径形式的重定向
-        if (location.startsWith("http")) {
-            url(location);
-        } else if (location.startsWith("/")) {
-            url(requestMeta.url.getProtocol() + "://" + requestMeta.url.getHost() + ":" + (requestMeta.url.getPort() == -1 ? requestMeta.url.getDefaultPort() : requestMeta.url.getPort()) + location);
-        } else {
-            String u = requestMeta.url.toString();
-            url(u.substring(0, u.lastIndexOf("/")) + "/" + location);
-        }
-        //重定向时方法改为get方法,删除所有主体内容
-        requestMeta.statusLine = null;
-        method(Request.Method.GET);
-        requestMeta.statusLine = null;
-        requestMeta.contentType = null;
-        requestMeta.userContentType = null;
-        requestMeta.boundary = null;
-        requestMeta.parameterMap.clear();
-        requestMeta.dataMap.clear();
-        requestMeta.dataFileMap.clear();
-        requestMeta.requestBody = null;
-        requestMeta.bodyLog = null;
-    }
 }

@@ -72,19 +72,4 @@ public class ResponseMeta {
      * Document对象
      */
     public DocumentParser documentParser;
-
-    public void reset(){
-        this.httpURLConnection = null;
-        this.topHost = null;
-        this.statusCode = 0;
-        this.statusMessage = null;
-        this.statusLine = null;
-        this.charset = null;
-        this.contentType = null;
-        this.headerMap.clear();
-        this.inputStream = null;
-        this.body = null;
-        this.document = null;
-        this.documentParser = null;
-    }
 }

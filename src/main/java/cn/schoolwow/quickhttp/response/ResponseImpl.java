@@ -2,8 +2,7 @@ package cn.schoolwow.quickhttp.response;
 
 import cn.schoolwow.quickhttp.document.Document;
 import cn.schoolwow.quickhttp.document.DocumentParser;
-import cn.schoolwow.quickhttp.domain.ClientConfig;
-import cn.schoolwow.quickhttp.domain.RequestMeta;
+import cn.schoolwow.quickhttp.domain.Client;
 import cn.schoolwow.quickhttp.domain.ResponseMeta;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -15,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
@@ -32,49 +32,46 @@ import java.util.Set;
 
 public class ResponseImpl implements Response {
     private Logger logger = LoggerFactory.getLogger(ResponseImpl.class);
-    private RequestMeta requestMeta;
-    private ResponseMeta responseMeta;
-    private ClientConfig clientConfig;
 
-    public ResponseImpl(RequestMeta requestMeta, ResponseMeta responseMeta, ClientConfig clientConfig) {
-        this.requestMeta = requestMeta;
-        this.responseMeta = responseMeta;
-        this.clientConfig = clientConfig;
+    private Client client;
+
+    public ResponseImpl(Client client) {
+        this.client = client;
     }
 
     @Override
     public String url() {
-        return responseMeta.httpURLConnection.getURL().toString();
+        return client.responseMeta.httpURLConnection.getURL().toString();
     }
 
     @Override
     public int statusCode() {
-        return responseMeta.statusCode;
+        return client.responseMeta.statusCode;
     }
 
     @Override
     public String statusMessage() {
-        return responseMeta.statusMessage;
+        return client.responseMeta.statusMessage;
     }
 
     @Override
     public String charset() {
-        return responseMeta.charset;
+        return client.responseMeta.charset;
     }
 
     @Override
     public String contentType() {
-        return responseMeta.httpURLConnection.getContentType();
+        return client.responseMeta.httpURLConnection.getContentType();
     }
 
     @Override
     public long contentLength() {
-        return responseMeta.httpURLConnection.getContentLengthLong();
+        return client.responseMeta.httpURLConnection.getContentLengthLong();
     }
 
     @Override
     public String filename() {
-        String contentDisposition = responseMeta.httpURLConnection.getHeaderField("Content-Disposition");
+        String contentDisposition = client.responseMeta.httpURLConnection.getHeaderField("Content-Disposition");
         if (null == contentDisposition) {
             throw new IllegalArgumentException("返回头部无文件名称信息!");
         }
@@ -109,39 +106,39 @@ public class ResponseImpl implements Response {
 
     @Override
     public boolean hasHeader(String name) {
-        return responseMeta.headerMap.containsKey(name);
+        return client.responseMeta.headerMap.containsKey(name);
     }
 
     @Override
     public boolean hasHeader(String name, String value) {
-        return hasHeader(name) && responseMeta.headerMap.get(name).get(0).equals(value);
+        return hasHeader(name) && client.responseMeta.headerMap.get(name).get(0).equals(value);
     }
 
     @Override
     public List<String> header(String name) {
-        return responseMeta.headerMap.get(name);
+        return client.responseMeta.headerMap.get(name);
     }
 
     @Override
     public Map<String, List<String>> headers() {
-        return responseMeta.headerMap;
+        return client.responseMeta.headerMap;
     }
 
     @Override
     public boolean hasCookie(String name) {
-        return clientConfig.cookieOption.hasCookie(responseMeta.topHost,name);
+        return client.clientConfig.cookieOption.hasCookie(client.responseMeta.topHost,name);
     }
 
     @Override
     public boolean hasCookie(String name, String value) {
-        HttpCookie httpCookie = clientConfig.cookieOption.getCookie(responseMeta.topHost,name);
+        HttpCookie httpCookie = client.clientConfig.cookieOption.getCookie(client.responseMeta.topHost,name);
         return null!=httpCookie&&httpCookie.getValue().equals(value);
     }
 
     @Override
     public Response maxDownloadSpeed(int maxDownloadSpeed) {
-        if(null!=responseMeta.inputStream){
-            SpeedLimitInputStream speedLimitInputStream = (SpeedLimitInputStream) responseMeta.inputStream;
+        if(null!=client.responseMeta.inputStream){
+            SpeedLimitInputStream speedLimitInputStream = (SpeedLimitInputStream) client.responseMeta.inputStream;
             speedLimitInputStream.setMaxDownloadSpeed(maxDownloadSpeed);
         }
         return this;
@@ -149,10 +146,10 @@ public class ResponseImpl implements Response {
 
     @Override
     public String body() throws IOException {
-        if (null == responseMeta.body) {
+        if (null == client.responseMeta.body) {
             bodyAsBytes();
         }
-        return new String(responseMeta.body,Charset.forName(responseMeta.charset));
+        return new String(client.responseMeta.body,Charset.forName(client.responseMeta.charset));
     }
 
     @Override
@@ -183,15 +180,15 @@ public class ResponseImpl implements Response {
 
     @Override
     public byte[] bodyAsBytes() throws IOException {
-        if(null==responseMeta.inputStream){
+        if(null==client.responseMeta.inputStream){
             throw new IOException("http请求响应输入流获取失败!");
         }
         Path tempFilePath = Files.createTempFile("QuickHttp2.",".response");
-        Files.copy(responseMeta.inputStream,tempFilePath,StandardCopyOption.REPLACE_EXISTING);
-        responseMeta.body = Files.readAllBytes(tempFilePath);
+        Files.copy(client.responseMeta.inputStream,tempFilePath,StandardCopyOption.REPLACE_EXISTING);
+        client.responseMeta.body = Files.readAllBytes(tempFilePath);
         Files.deleteIfExists(tempFilePath);
         close();
-        return responseMeta.body;
+        return client.responseMeta.body;
     }
 
     @Override
@@ -202,7 +199,7 @@ public class ResponseImpl implements Response {
 
     @Override
     public void bodyAsFile(Path file) throws IOException {
-        if (null == responseMeta.inputStream) {
+        if (null == client.responseMeta.inputStream) {
             throw new IOException("写入文件失败!输入流为空!url:" + url());
         }
 
@@ -210,67 +207,74 @@ public class ResponseImpl implements Response {
             Files.createDirectories(file.getParent());
         }
 
-        long fileSize = Files.exists(file) ? Files.size(file) : 0;
-        if (null != responseMeta.body) {
-            if (Files.exists(file)) {
-                Files.write(file, responseMeta.body, StandardOpenOption.APPEND);
+        if (null != client.responseMeta.body) {
+            if (file.toFile().exists()) {
+                Files.write(file, client.responseMeta.body, StandardOpenOption.APPEND);
             } else {
-                Files.write(file, responseMeta.body, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+                Files.write(file, client.responseMeta.body, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
             }
-        } else {
-            //处理超时异常,尝试重试
-            int retryTimes = 1;
-            long contentLength = contentLength();
-            while (retryTimes <= requestMeta.retryTimes) {
-                try {
-                    if (null != responseMeta.httpURLConnection.getContentEncoding() || contentLength == -1) {
-                        Files.deleteIfExists(file);
-                        byte[] buffer = new byte[8192];
-                        int length = 0;
-                        FileOutputStream fos = new FileOutputStream(file.toFile());
-                        while((length=responseMeta.inputStream.read(buffer,0,buffer.length))>=0){
-                            fos.write(buffer,0,length);
-                            if(Thread.currentThread().isInterrupted()){
-                                logger.debug("[线程中断]文件下载任务停止!");
-                                break;
-                            }
-                        }
-                        fos.flush();
-                        fos.close();
-                    } else {
-                        ReadableByteChannel readableByteChannel = Channels.newChannel(responseMeta.inputStream);
-                        Set<StandardOpenOption> openOptions = null;
-                        if (Files.exists(file)) {
-                            openOptions = EnumSet.of(StandardOpenOption.APPEND);
-                        } else {
-                            openOptions = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-                        }
-                        FileChannel fileChannel = FileChannel.open(file, openOptions);
-                        try {
-                            fileChannel.transferFrom(readableByteChannel, Files.size(file), contentLength);
-                        }catch (ClosedByInterruptException e){
-                            logger.debug("[线程中断]文件下载任务停止!");
-                            Thread.currentThread().interrupt();
+            return;
+        }
+
+        int retryTimes = 1;
+        IOException e = null;
+        long contentLength = contentLength();
+        //处理超时异常,尝试重试
+        while (retryTimes <= client.requestMeta.retryTimes) {
+            try {
+                if (null != client.responseMeta.httpURLConnection.getContentEncoding() || contentLength == -1) {
+                    Files.deleteIfExists(file);
+                    byte[] buffer = new byte[8192];
+                    int length = 0;
+                    FileOutputStream fos = new FileOutputStream(file.toFile());
+                    while((length=client.responseMeta.inputStream.read(buffer,0,buffer.length))>=0){
+                        fos.write(buffer,0,length);
+                        if(Thread.currentThread().isInterrupted()){
+                            logger.debug("线程中断,文件下载任务停止!");
                             break;
                         }
-                        fileChannel.close();
                     }
-                    break;
-                } catch (SocketTimeoutException e) {
-                    logger.warn("[下载超时]重试{}/{},原因:{},链接:{}", retryTimes, requestMeta.retryTimes, e.getMessage(), url());
-                    retryTimes++;
+                    fos.flush();
+                    fos.close();
+                } else {
+                    ReadableByteChannel readableByteChannel = Channels.newChannel(client.responseMeta.inputStream);
+                    Set<StandardOpenOption> openOptions = null;
+                    if (file.toFile().exists()) {
+                        openOptions = EnumSet.of(StandardOpenOption.APPEND);
+                    } else {
+                        openOptions = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+                    }
+                    FileChannel fileChannel = FileChannel.open(file, openOptions);
+                    try {
+                        fileChannel.transferFrom(readableByteChannel, Files.size(file), contentLength);
+                    }catch (ClosedByInterruptException ex){
+                        logger.debug("线程中断,文件下载任务停止!");
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    fileChannel.close();
                 }
+                break;
+            } catch (SocketTimeoutException | ConnectException ex) {
+                e = ex;
+                logger.debug("下载超时,重试{}/{},链接:{}", retryTimes, client.requestMeta.retryTimes, url());
+                retryTimes++;
             }
         }
         close();
+        if(retryTimes>client.requestMeta.retryTimes){
+            throw e;
+        }
         if(Thread.currentThread().isInterrupted()){
+            logger.debug("线程中断,文件下载任务停止!");
             return;
         }
         if (contentLength() > 0) {
+            long fileSize = file.toFile().exists() ? file.toFile().length() : 0;
             //检查是否下载成功
             long expectFileSize = fileSize + contentLength();
-            if (!responseMeta.headerMap.containsKey("Content-Encoding")&&(Files.notExists(file) || Files.size(file) != expectFileSize)) {
-                logger.warn("[文件下载失败]预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
+            if (!client.responseMeta.headerMap.containsKey("Content-Encoding")&&(Files.notExists(file) || Files.size(file) != expectFileSize)) {
+                logger.warn("文件下载失败,预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
                 return;
             }
         }
@@ -278,36 +282,36 @@ public class ResponseImpl implements Response {
 
     @Override
     public InputStream bodyStream() {
-        return responseMeta.inputStream;
+        return client.responseMeta.inputStream;
     }
 
     @Override
     public Document parse() throws IOException {
-        if (responseMeta.document == null) {
-            if (responseMeta.body == null) {
+        if (client.responseMeta.document == null) {
+            if (client.responseMeta.body == null) {
                 body();
             }
-            responseMeta.document = Document.parse(body());
+            client.responseMeta.document = Document.parse(body());
         }
-        return responseMeta.document;
+        return client.responseMeta.document;
     }
 
     @Override
     public DocumentParser parser() throws IOException {
-        if (responseMeta.documentParser == null) {
-            if (responseMeta.body == null) {
+        if (client.responseMeta.documentParser == null) {
+            if (client.responseMeta.body == null) {
                 body();
             }
-            responseMeta.documentParser = DocumentParser.parse(body());
+            client.responseMeta.documentParser = DocumentParser.parse(body());
         }
-        return responseMeta.documentParser;
+        return client.responseMeta.documentParser;
     }
 
     @Override
     public void close() {
         try {
-            if (null != responseMeta.inputStream) {
-                responseMeta.inputStream.close();
+            if (null != client.responseMeta.inputStream) {
+                client.responseMeta.inputStream.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -317,17 +321,17 @@ public class ResponseImpl implements Response {
     @Override
     public void disconnect() {
         try {
-            if (null != responseMeta.inputStream) {
-                responseMeta.inputStream.close();
+            if (null != client.responseMeta.inputStream) {
+                client.responseMeta.inputStream.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        responseMeta.httpURLConnection.disconnect();
+        client.responseMeta.httpURLConnection.disconnect();
     }
 
     @Override
     public ResponseMeta responseMeta() {
-        return responseMeta;
+        return client.responseMeta;
     }
 }

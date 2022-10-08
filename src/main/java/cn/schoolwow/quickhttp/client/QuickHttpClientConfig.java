@@ -102,13 +102,6 @@ public interface QuickHttpClientConfig {
     QuickHttpClientConfig quickHttpClientListener(QuickHttpClientListener quickHttpClientListener);
 
     /**
-     * 指定请求日志文件夹
-     *
-     * @param logDirectoryPath 日志文件夹路径
-     */
-    QuickHttpClientConfig logDirectoryPath(String logDirectoryPath);
-
-    /**
      * Cookie管理
      */
     CookieOption cookieOption();

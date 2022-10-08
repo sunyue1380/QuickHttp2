@@ -152,10 +152,12 @@ public class AbstractElement implements Element {
         this.attributes.clear();
     }
 
+    @Override
     public String tagName() {
         return tagName;
     }
 
+    @Override
     public String text() {
         Elements elements = textElement();
         StringBuilder builder = htmlBuilderThreadLocal.get();

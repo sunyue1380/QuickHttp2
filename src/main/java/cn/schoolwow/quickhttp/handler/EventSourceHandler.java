@@ -1,6 +1,6 @@
 package cn.schoolwow.quickhttp.handler;
 
-import cn.schoolwow.quickhttp.domain.MetaWrapper;
+import cn.schoolwow.quickhttp.domain.Client;
 import cn.schoolwow.quickhttp.response.EventSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,40 +13,37 @@ import java.nio.charset.StandardCharsets;
 /**
  * EventSource类型数据处理
  * */
-public class EventSourceHandler extends AbstractHandler{
+public class EventSourceHandler implements Handler{
     private static Logger logger = LoggerFactory.getLogger(EventSourceHandler.class);
 
-    public EventSourceHandler(MetaWrapper metaWrapper) {
-        super(metaWrapper);
-    }
-
     @Override
-    public Handler handle() throws IOException {
-        handleEventSource();
-        return new RequestLogHandler(metaWrapper);
+    public Handler handle(Client client) throws IOException {
+        handleEventSource(client);
+        return new RequestLogHandler();
     }
 
     /**
      * 处理EventSource类型数据
      * */
-    private void handleEventSource() throws IOException {
-        if(null==responseMeta.contentType){
+    private void handleEventSource(Client client) throws IOException {
+        if(null==client.responseMeta.contentType){
             return;
         }
-        if(!responseMeta.contentType.toLowerCase().contains("text/event-stream")){
+        if(!client.responseMeta.contentType.toLowerCase().contains("text/event-stream")){
             return;
         }
-        if(null==requestMeta.eventSourceConsumer){
+        if(null==client.requestMeta.eventSourceConsumer){
             return;
         }
-        logger.trace("[处理EventSource]Content-Type:{}",responseMeta.contentType);
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(responseMeta.inputStream, StandardCharsets.UTF_8));
+        logger.trace("处理EventSource, 当前Content-Type:{}", client.responseMeta.contentType);
+        InputStreamReader inputStreamReader = new InputStreamReader(client.responseMeta.inputStream, StandardCharsets.UTF_8);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
         EventSource eventSource = null;
         String line = bufferedReader.readLine();
         StringBuilder builder = new StringBuilder();
         while(null!=line){
-            if(line.equals("")){
-                requestMeta.eventSourceConsumer.accept(eventSource);
+            if(line.isEmpty()){
+                client.requestMeta.eventSourceConsumer.accept(eventSource);
             }else{
                 if(null==eventSource){
                     eventSource = new EventSource();
@@ -67,6 +64,6 @@ public class EventSourceHandler extends AbstractHandler{
             builder.append(line+"\r\n");
             line = bufferedReader.readLine();
         }
-        responseMeta.body = builder.toString().getBytes(StandardCharsets.UTF_8);
+        client.responseMeta.body = builder.toString().getBytes(StandardCharsets.UTF_8);
     }
 }

@@ -3,7 +3,8 @@ package cn.schoolwow.quickhttp.handler;
 import cn.schoolwow.quickhttp.document.Document;
 import cn.schoolwow.quickhttp.document.element.Element;
 import cn.schoolwow.quickhttp.document.element.Elements;
-import cn.schoolwow.quickhttp.domain.MetaWrapper;
+import cn.schoolwow.quickhttp.domain.Client;
+import cn.schoolwow.quickhttp.domain.ResponseMeta;
 import cn.schoolwow.quickhttp.response.ResponseImpl;
 import cn.schoolwow.quickhttp.response.SpeedLimitInputStream;
 import org.slf4j.Logger;
@@ -19,7 +20,6 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -31,107 +31,97 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
-public class ResponseHandler extends AbstractHandler{
+public class ResponseHandler implements Handler{
     private static Logger logger = LoggerFactory.getLogger(ResponseHandler.class);
 
-    public ResponseHandler(MetaWrapper metaWrapper) {
-        super(metaWrapper);
-    }
-
     @Override
-    public Handler handle() throws IOException {
-        getStatusCode();
-        getRequestHeader();
-        getResponseHeader();
-        getBody();
-        getCharset();
-        return new EventSourceHandler(metaWrapper);
+    public Handler handle(Client client) throws IOException {
+        getStatusCode(client);
+        getRequestHeader(client);
+        getResponseHeader(client);
+        getBody(client);
+        getCharset(client);
+        return new EventSourceHandler();
     }
 
     /**
      * 获取响应状态码
-     * @return 是否继续执行
      * */
-    private void getStatusCode() throws IOException {
-        HttpURLConnection httpURLConnection = responseMeta.httpURLConnection;
-        responseMeta.statusCode = httpURLConnection.getResponseCode();
-        responseMeta.statusMessage = httpURLConnection.getResponseMessage();
-        if (null == responseMeta.statusMessage) {
-            responseMeta.statusMessage = "";
+    private void getStatusCode(Client client) throws IOException {
+        HttpURLConnection httpURLConnection = client.responseMeta.httpURLConnection;
+        client.responseMeta.statusCode = httpURLConnection.getResponseCode();
+        client.responseMeta.statusMessage = httpURLConnection.getResponseMessage();
+        if (null == client.responseMeta.statusMessage) {
+            client.responseMeta.statusMessage = "";
         }
         //获取顶级域
-        responseMeta.topHost = httpURLConnection.getURL().getHost();
-        if(responseMeta.topHost.contains(".")){
-            String substring = responseMeta.topHost.substring(0,responseMeta.topHost.lastIndexOf("."));
+        client.responseMeta.topHost = httpURLConnection.getURL().getHost();
+        if(client.responseMeta.topHost.contains(".")){
+            String substring = client.responseMeta.topHost.substring(0,client.responseMeta.topHost.lastIndexOf("."));
             if(substring.contains(".")){
-                responseMeta.topHost = responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
+                client.responseMeta.topHost = client.responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
             }
         }
     }
 
     /**
      * 获取请求头部
-     *
      */
-    private void getRequestHeader(){
+    private void getRequestHeader(Client client){
         //提取请求头信息
         try {
             Field requestsMessageHeaderField = sun.net.www.protocol.http.HttpURLConnection.class.getDeclaredField("requests");
             requestsMessageHeaderField.setAccessible(true);
             MessageHeader requestsMessageHeader = null;
-            if (responseMeta.httpURLConnection instanceof HttpsURLConnection) {
+            if (client.responseMeta.httpURLConnection instanceof HttpsURLConnection) {
                 Field delegateField = HttpsURLConnectionImpl.class.getDeclaredField("delegate");
                 delegateField.setAccessible(true);
-                DelegateHttpsURLConnection delegateHttpsURLConnection = (DelegateHttpsURLConnection) delegateField.get(responseMeta.httpURLConnection);
+                DelegateHttpsURLConnection delegateHttpsURLConnection = (DelegateHttpsURLConnection) delegateField.get(client.responseMeta.httpURLConnection);
                 requestsMessageHeader = (MessageHeader) requestsMessageHeaderField.get(delegateHttpsURLConnection);
             } else {
-                requestsMessageHeader = (MessageHeader) requestsMessageHeaderField.get(responseMeta.httpURLConnection);
+                requestsMessageHeader = (MessageHeader) requestsMessageHeaderField.get(client.responseMeta.httpURLConnection);
             }
             //添加请求头部
             Map<String, List<String>> headerMap = requestsMessageHeader.getHeaders();
             Set<Map.Entry<String, List<String>>> entrySet = headerMap.entrySet();
-            requestMeta.headerMap.clear();
+            client.requestMeta.headerMap.clear();
             for (Map.Entry<String, List<String>> entry : entrySet) {
                 if (null == entry.getValue().get(0)) {
-                    requestMeta.statusLine = entry.getKey();
+                    client.requestMeta.statusLine = entry.getKey();
                     continue;
                 }
-                requestMeta.headerMap.put(entry.getKey(), entry.getValue());
+                client.requestMeta.headerMap.put(entry.getKey(), entry.getValue());
             }
+            //提取Cookie信息
+            URI uri = client.responseMeta.httpURLConnection.getURL().toURI();
+            client.clientConfig.cookieManager.put(uri, client.responseMeta.httpURLConnection.getHeaderFields());
         }catch (Exception e){
-            e.printStackTrace();
+            logger.error("获取实际请求头部信息失败", e);
         }
-        //提取Cookie信息
-        try {
-            URI uri = responseMeta.httpURLConnection.getURL().toURI();
-            clientConfig.cookieManager.put(uri, responseMeta.httpURLConnection.getHeaderFields());
-        } catch (URISyntaxException | IOException e) {
-            e.printStackTrace();
-        }
-        metaWrapper.response = new ResponseImpl(requestMeta, responseMeta,clientConfig);
+        client.response = new ResponseImpl(client);
     }
 
     /**
      * 获取响应头部
      * */
-    private void getResponseHeader(){
+    private void getResponseHeader(Client client){
         try {
             Field responsesMessageHeaderField = sun.net.www.protocol.http.HttpURLConnection.class.getDeclaredField("responses");
             responsesMessageHeaderField.setAccessible(true);
             MessageHeader responsesMessageHeader = null;
-            if(responseMeta.httpURLConnection instanceof HttpsURLConnection){
+            if(client.responseMeta.httpURLConnection instanceof HttpsURLConnection){
                 Field delegateField = HttpsURLConnectionImpl.class.getDeclaredField("delegate");
                 delegateField.setAccessible(true);
-                DelegateHttpsURLConnection delegateHttpsURLConnection = (DelegateHttpsURLConnection) delegateField.get(responseMeta.httpURLConnection);
+                DelegateHttpsURLConnection delegateHttpsURLConnection = (DelegateHttpsURLConnection) delegateField.get(client.responseMeta.httpURLConnection);
                 responsesMessageHeader = (MessageHeader) responsesMessageHeaderField.get(delegateHttpsURLConnection);
             }else {
-                responsesMessageHeader = (MessageHeader) responsesMessageHeaderField.get(responseMeta.httpURLConnection);
+                responsesMessageHeader = (MessageHeader) responsesMessageHeaderField.get(client.responseMeta.httpURLConnection);
             }
             Map<String,List<String>> headerMap = responsesMessageHeader.getHeaders();
             Set<Map.Entry<String,List<String>>> entrySet = headerMap.entrySet();
             for(Map.Entry<String,List<String>> entry:entrySet){
                 if(null==entry.getKey()){
-                    responseMeta.statusLine = entry.getValue().get(0);
+                    client.responseMeta.statusLine = entry.getValue().get(0);
                     continue;
                 }
                 List<String> values = entry.getValue();
@@ -142,68 +132,61 @@ public class ResponseHandler extends AbstractHandler{
                     }
                     newValues.add(new String(values.get(i).getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
                 }
-                responseMeta.headerMap.put(entry.getKey(),newValues);
+                client.responseMeta.headerMap.put(entry.getKey(),newValues);
                 if("Content-Type".equalsIgnoreCase(entry.getKey())){
-                    responseMeta.contentType = newValues.get(0);
+                    client.responseMeta.contentType = newValues.get(0);
                 }
             }
         }catch (Exception e){
-            e.printStackTrace();
+            logger.error("获取实际响应头部信息失败", e);
         }
     }
 
     /**
      * 获取body
      * */
-    private void getBody() throws IOException {
-        if(!requestMeta.ignoreHttpErrors&&!clientConfig.ignoreHttpErrors&&responseMeta.statusCode>=400){
-            logger.warn("[跳过获取请求体]当前状态码无法获取请求体,当前状态码:{}",responseMeta.statusCode);
-            return;
-        }
-        try {
-            String contentEncoding = responseMeta.httpURLConnection.getContentEncoding();
-            InputStream inputStream = responseMeta.httpURLConnection.getErrorStream() != null ? responseMeta.httpURLConnection.getErrorStream() : responseMeta.httpURLConnection.getInputStream();
-            if (contentEncoding != null && !contentEncoding.isEmpty()) {
-                if (contentEncoding.equals("gzip")) {
-                    inputStream = new GZIPInputStream(inputStream);
-                } else if (contentEncoding.equals("deflate")) {
-                    inputStream = new InflaterInputStream(inputStream, new Inflater(true));
-                }
+    private void getBody(Client client) throws IOException {
+        String contentEncoding = client.responseMeta.httpURLConnection.getContentEncoding();
+        InputStream inputStream = client.responseMeta.httpURLConnection.getErrorStream() != null ? client.responseMeta.httpURLConnection.getErrorStream() : client.responseMeta.httpURLConnection.getInputStream();
+        if (contentEncoding != null && !contentEncoding.isEmpty()) {
+            if (contentEncoding.equals("gzip")) {
+                inputStream = new GZIPInputStream(inputStream);
+            } else if (contentEncoding.equals("deflate")) {
+                inputStream = new InflaterInputStream(inputStream, new Inflater(true));
             }
-            responseMeta.inputStream = inputStream;
-            responseMeta.inputStream = new BufferedInputStream(inputStream);
-            responseMeta.inputStream = new SpeedLimitInputStream(responseMeta.inputStream);
-        } catch (IOException e) {
-            logger.warn("读取输入流失败");
         }
+        client.responseMeta.inputStream = inputStream;
+        client.responseMeta.inputStream = new BufferedInputStream(inputStream);
+        client.responseMeta.inputStream = new SpeedLimitInputStream(client.responseMeta.inputStream);
     }
 
     /**
      * 提取编码信息
      */
-    private void getCharset() throws IOException {
-        getCharsetFromContentType(responseMeta.httpURLConnection.getContentType());
-        if (responseMeta.charset == null&&null!=responseMeta.inputStream) {
+    private void getCharset(Client client) throws IOException {
+        String contentType = client.responseMeta.httpURLConnection.getContentType();
+        getCharsetFromContentType(contentType, client.responseMeta);
+        if (client.responseMeta.charset == null&&null!=client.responseMeta.inputStream) {
             byte[] bytes = new byte[1024 * 5];
-            responseMeta.inputStream.mark(bytes.length);
-            responseMeta.inputStream.read(bytes, 0, bytes.length);
-            boolean readFully = (responseMeta.inputStream.read() == -1);
-            responseMeta.inputStream.reset();
+            client.responseMeta.inputStream.mark(bytes.length);
+            client.responseMeta.inputStream.read(bytes, 0, bytes.length);
+            boolean readFully = (client.responseMeta.inputStream.read() == -1);
+            client.responseMeta.inputStream.reset();
             ByteBuffer firstBytes = ByteBuffer.wrap(bytes);
-            getCharsetFromBOM(firstBytes);
-            if (responseMeta.charset == null) {
-                getCharsetFromMeta(firstBytes, readFully);
+            getCharsetFromBOM(firstBytes, client.responseMeta);
+            if (client.responseMeta.charset == null) {
+                getCharsetFromMeta(firstBytes, readFully, client.responseMeta);
             }
         }
-        if (responseMeta.charset == null) {
-            responseMeta.charset = "utf-8";
+        if (client.responseMeta.charset == null) {
+            client.responseMeta.charset = "utf-8";
         }
     }
 
     /**
      * 从meta标签里面获取编码信息
      */
-    private void getCharsetFromMeta(ByteBuffer byteBuffer, boolean readFully) {
+    private void getCharsetFromMeta(ByteBuffer byteBuffer, boolean readFully, ResponseMeta responseMeta) {
         String docData = StandardCharsets.UTF_8.decode(byteBuffer).toString();
         //判断是否是HTML或者XML文档
         if (!docData.startsWith("<?xml") && !docData.startsWith("<!DOCTYPE")) {
@@ -217,7 +200,7 @@ public class ResponseHandler extends AbstractHandler{
         Elements metaElements = doc.select("meta[http-equiv=content-type], meta[charset]");
         for (Element meta : metaElements) {
             if (meta.hasAttr("http-equiv")) {
-                getCharsetFromContentType(meta.attr("content"));
+                getCharsetFromContentType(meta.attr("content"), responseMeta);
             }
             if (responseMeta.charset == null && meta.hasAttr("charset")) {
                 responseMeta.charset = meta.attr("charset");
@@ -239,7 +222,7 @@ public class ResponseHandler extends AbstractHandler{
     /**
      * 从BOM里面获取编码信息
      */
-    private void getCharsetFromBOM(ByteBuffer byteBuffer) throws IOException {
+    private void getCharsetFromBOM(ByteBuffer byteBuffer, ResponseMeta responseMeta) throws IOException {
         final Buffer buffer = byteBuffer;
         buffer.mark();
         byte[] bom = new byte[4];
@@ -264,7 +247,7 @@ public class ResponseHandler extends AbstractHandler{
     /**
      * 从Content-Type头部获取编码信息
      */
-    private void getCharsetFromContentType(String contentType) {
+    private void getCharsetFromContentType(String contentType, ResponseMeta responseMeta) {
         String prefix = "charset=";
         if (contentType != null && contentType.contains(prefix)) {
             int startIndex = contentType.indexOf(prefix);

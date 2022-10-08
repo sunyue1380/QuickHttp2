@@ -91,12 +91,6 @@ public class QuickHttpClientConfigImpl implements QuickHttpClientConfig {
     }
 
     @Override
-    public QuickHttpClientConfig logDirectoryPath(String logDirectoryPath) {
-        clientConfig.logDirectoryPath = logDirectoryPath;
-        return this;
-    }
-
-    @Override
     public CookieOption cookieOption() {
         return clientConfig.cookieOption;
     }
