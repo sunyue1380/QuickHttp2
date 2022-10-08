@@ -183,7 +183,6 @@ public class RequestImpl implements Request {
         httpCookie.setMaxAge(3600000);
         httpCookie.setPath("/");
         cookie(httpCookie);
-        clientConfig.cookieOption.addCookie(httpCookie);
         return this;
     }
 

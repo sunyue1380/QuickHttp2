@@ -89,13 +89,13 @@ public class RequestHandler implements Handler{
         Set<Map.Entry<String, List<String>>> entrySet = client.requestMeta.headerMap.entrySet();
         for(Map.Entry<String,List<String>> entry:entrySet){
             for(String value:entry.getValue()){
-                logger.trace("添加头部-{}:{}", entry.getKey(), value);
+                logger.trace("添加头部 {} : {}", entry.getKey(), value);
                 client.responseMeta.httpURLConnection.addRequestProperty(entry.getKey(), value);
             }
         }
         if (null != client.requestMeta.contentType) {
+            logger.trace("设置Content-Type: {}", client.requestMeta.contentType);
             client.responseMeta.httpURLConnection.setRequestProperty("Content-Type", client.requestMeta.contentType);
-            logger.trace("设置Content-Type：{}", client.requestMeta.contentType);
         }
         //设置Cookie
         Map<String,List<String>> cookieHeaderMap = client.clientConfig.cookieManager.get(client.requestMeta.url.toURI(), client.requestMeta.headerMap);
@@ -111,7 +111,8 @@ public class RequestHandler implements Handler{
         for(String cookie:cookieList){
             builder.append(" "+cookie+";");
         }
-        logger.trace("设置Cookie头部:{}",builder.toString());
+        logger.trace("设置Cookie头部:{}", builder.toString());
+        client.responseMeta.httpURLConnection.setRequestProperty("Cookie", builder.toString());
     }
 
     /**

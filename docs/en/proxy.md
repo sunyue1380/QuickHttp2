@@ -27,6 +27,8 @@ QuickHttp.proxy("127.0.0.1",8888);
 
 ## Proxy Dynamically
 
+> removed since 1.0.9
+
 This features is very nice if you want to debug in product environment.
 
 Creating file ``QuickHttpConfig.json`` in directory of jar file.The content are as following:

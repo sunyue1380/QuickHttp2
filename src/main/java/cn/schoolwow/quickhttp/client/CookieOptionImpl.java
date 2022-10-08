@@ -1,5 +1,8 @@
 package cn.schoolwow.quickhttp.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.HttpCookie;
@@ -11,6 +14,8 @@ import java.util.StringTokenizer;
  * Cookie管理
  */
 public class CookieOptionImpl implements CookieOption {
+    private Logger logger = LoggerFactory.getLogger(CookieOptionImpl.class);
+
     private CookieManager cookieManager;
 
     public CookieOptionImpl(CookieManager cookieManager) {
@@ -146,12 +151,14 @@ public class CookieOptionImpl implements CookieOption {
         boolean httpCookieExists = false;
         for(HttpCookie httpCookie1:httpCookieList){
             if(httpCookie.getDomain().equalsIgnoreCase(httpCookie1.getDomain())&&httpCookie.getName().equalsIgnoreCase(httpCookie1.getName())){
+                logger.debug("更新Cookie值:{}", httpCookie);
                 httpCookie1.setValue(httpCookie.getValue());
                 httpCookieExists = true;
                 break;
             }
         }
         if(!httpCookieExists){
+            logger.debug("添加Cookie:{}", httpCookie);
             cookieManager.getCookieStore().add(null, httpCookie);
         }
     }

@@ -16,6 +16,8 @@ public class QuickHttp {
 
     static {
         CookieManager.setDefault(defaultQuickHttpClient.clientConfig().cookieOption().cookieManager());
+        //禁止httpUrlConnection自动重试
+        System.setProperty("sun.net.http.retryPost", "false");
     }
 
     /**

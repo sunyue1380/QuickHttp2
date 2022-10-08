@@ -31,7 +31,7 @@ public class RequestLogHandler implements Handler{
      * 获取请求和响应日志
      */
     private String getRequestAndResponseLog(Client client) throws IOException {
-        StringBuilder contentBuilder = new StringBuilder("\n====================================================================\n");
+        StringBuilder contentBuilder = new StringBuilder("====================================================================\n");
         contentBuilder.append(client.requestMeta.statusLine + "\n");
         Set<Map.Entry<String, List<String>>> requestHeaderSet = client.requestMeta.headerMap.entrySet();
         for (Map.Entry<String, List<String>> entry : requestHeaderSet) {

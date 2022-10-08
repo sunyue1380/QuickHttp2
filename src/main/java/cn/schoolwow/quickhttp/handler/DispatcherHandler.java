@@ -1,7 +1,6 @@
 package cn.schoolwow.quickhttp.handler;
 
 import cn.schoolwow.quickhttp.domain.Client;
-import cn.schoolwow.quickhttp.domain.QuickHttpConfig;
 import cn.schoolwow.quickhttp.listener.QuickHttpClientListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +110,6 @@ public class DispatcherHandler implements Handler{
      * 检查请求数据是否有误
      */
     private void checkRequestMeta(Client client) {
-        logger.debug("检查请求元数据!");
         if (null == client.requestMeta.url) {
             logger.debug("url不能为空!");
             throw new IllegalArgumentException("url不能为空!");
@@ -124,10 +122,6 @@ public class DispatcherHandler implements Handler{
         if (null == client.requestMeta.proxy) {
             client.requestMeta.proxy = client.clientConfig.proxy;
         }
-        if (null == client.requestMeta.proxy) {
-            client.requestMeta.proxy = QuickHttpConfig.proxy;
-        }
-
         if (3000 == client.requestMeta.connectTimeoutMillis) {
             client.requestMeta.connectTimeoutMillis = client.clientConfig.connectTimeoutMillis;
         }
