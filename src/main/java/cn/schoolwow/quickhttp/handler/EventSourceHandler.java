@@ -49,16 +49,16 @@ public class EventSourceHandler implements Handler{
                     eventSource = new EventSource();
                 }
                 if(line.startsWith("id:")){
-                    eventSource.id = Integer.parseInt(line.substring(line.indexOf(":")+1));
+                    eventSource.id = Integer.parseInt(line.substring(line.indexOf(':')+1));
                 }
                 if(line.startsWith("event:")){
-                    eventSource.event = line.substring(line.indexOf(":")+1);
+                    eventSource.event = line.substring(line.indexOf(':')+1);
                 }
                 if(line.startsWith("retry:")){
-                    eventSource.retry = Integer.parseInt(line.substring(line.indexOf(":")+1));
+                    eventSource.retry = Integer.parseInt(line.substring(line.indexOf(':')+1));
                 }
                 if(line.startsWith("data:")){
-                    eventSource.data = line.substring(line.indexOf(":")+1);
+                    eventSource.data = line.substring(line.indexOf(':')+1);
                 }
             }
             builder.append(line+"\r\n");

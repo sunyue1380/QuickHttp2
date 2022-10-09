@@ -11,9 +11,6 @@ import java.net.URL;
 public class QuickHttpClientImpl implements QuickHttpClient {
     private QuickHttpClientConfigImpl quickHttpClientConfig = new QuickHttpClientConfigImpl();
 
-    public QuickHttpClientImpl() {
-    }
-
     @Override
     public QuickHttpClientConfig clientConfig() {
         return quickHttpClientConfig;

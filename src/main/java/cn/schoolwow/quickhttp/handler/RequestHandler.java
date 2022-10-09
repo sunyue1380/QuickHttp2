@@ -19,6 +19,7 @@ public class RequestHandler implements Handler{
     private static ThreadLocal<StringBuilder> builderThreadLocal = new ThreadLocal<>();
     private static final char[] mimeBoundaryChars =
             "-_1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+    private static final Random rand = new Random();
     private static final int boundaryLength = 32;
 
     public RequestHandler() {
@@ -214,7 +215,6 @@ public class RequestHandler implements Handler{
      */
     private static String mimeBoundary() {
         final StringBuilder mime = new StringBuilder(boundaryLength);
-        final Random rand = new Random();
         for (int i = 0; i < boundaryLength; i++) {
             mime.append(mimeBoundaryChars[rand.nextInt(mimeBoundaryChars.length)]);
         }

@@ -73,7 +73,7 @@ public class DispatcherHandler implements Handler{
                     retryTimes++;
                 }
             }
-            if(retryTimes>client.requestMeta.retryTimes){
+            if(retryTimes>client.requestMeta.retryTimes&&null!=e){
                 throw e;
             }
             //请求执行成功
@@ -116,7 +116,7 @@ public class DispatcherHandler implements Handler{
         }
         String protocol = client.requestMeta.url.getProtocol();
         if (!protocol.startsWith("http")) {
-            logger.debug("当前只支持http和https协议.当前url:" + client.requestMeta.url);
+            logger.debug("当前只支持http和https协议.当前url:{}", client.requestMeta.url);
             throw new IllegalArgumentException("当前只支持http和https协议.当前url:" + client.requestMeta.url);
         }
         if (null == client.requestMeta.proxy) {

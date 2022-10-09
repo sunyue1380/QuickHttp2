@@ -27,7 +27,7 @@ public class RedirectHandler implements Handler{
         String location = client.responseMeta.httpURLConnection.getHeaderField("Location");
         while (client.requestMeta.followRedirects && null != location) {
             if (followRedirectTimes >= client.requestMeta.maxFollowRedirectTimes) {
-                logger.warn("重定向次数过多!限制最大次数:"+client.requestMeta.maxFollowRedirectTimes);
+                logger.warn("重定向次数过多!限制最大次数:{}", client.requestMeta.maxFollowRedirectTimes);
                 throw new IOException("重定向次数过多!限制最大次数:" + client.requestMeta.maxFollowRedirectTimes);
             }
             logger.debug("执行重定向!地址:{}",location);
@@ -62,7 +62,7 @@ public class RedirectHandler implements Handler{
             client.request.url(url);
         } else {
             String u = client.requestMeta.url.toString();
-            client.request.url(u.substring(0, u.lastIndexOf("/")) + "/" + location);
+            client.request.url(u.substring(0, u.lastIndexOf('/')) + "/" + location);
         }
         //重定向时方法改为get方法,删除所有主体内容
         client.requestMeta.statusLine = null;

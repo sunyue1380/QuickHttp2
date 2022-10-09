@@ -57,9 +57,9 @@ public class ResponseHandler implements Handler{
         //获取顶级域
         client.responseMeta.topHost = httpURLConnection.getURL().getHost();
         if(client.responseMeta.topHost.contains(".")){
-            String substring = client.responseMeta.topHost.substring(0,client.responseMeta.topHost.lastIndexOf("."));
+            String substring = client.responseMeta.topHost.substring(0,client.responseMeta.topHost.lastIndexOf('.'));
             if(substring.contains(".")){
-                client.responseMeta.topHost = client.responseMeta.topHost.substring(substring.lastIndexOf(".")+1);
+                client.responseMeta.topHost = client.responseMeta.topHost.substring(substring.lastIndexOf('.')+1);
             }
         }
     }
@@ -252,7 +252,7 @@ public class ResponseHandler implements Handler{
         if (contentType != null && contentType.contains(prefix)) {
             int startIndex = contentType.indexOf(prefix);
             if (startIndex >= 0) {
-                int endIndex = contentType.lastIndexOf(";");
+                int endIndex = contentType.lastIndexOf(';');
                 if (endIndex > startIndex) {
                     responseMeta.charset = contentType.substring(startIndex + prefix.length(), endIndex).trim();
                 } else if (endIndex < startIndex) {

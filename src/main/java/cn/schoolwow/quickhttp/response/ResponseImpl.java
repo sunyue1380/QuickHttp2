@@ -76,7 +76,7 @@ public class ResponseImpl implements Response {
             throw new IllegalArgumentException("返回头部无文件名称信息!");
         }
         String fileName = null;
-        if (contentDisposition.indexOf("filename*=") > 0) {
+        if (contentDisposition.contains("filename*=")) {
             fileName = contentDisposition.substring(contentDisposition.indexOf("filename*=") + "filename*=".length());
             String charset = fileName.substring(0, fileName.indexOf("''")).replace("\"", "");
             fileName = fileName.substring(fileName.indexOf("''") + 2).replace("\"", "");
@@ -86,7 +86,7 @@ public class ResponseImpl implements Response {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-        } else if (contentDisposition.indexOf("filename=") > 0) {
+        } else if (contentDisposition.contains("filename=")) {
             fileName = contentDisposition.substring(contentDisposition.indexOf("filename=") + "filename=".length());
             fileName = fileName.replace("\"", "").trim();
         }
@@ -167,14 +167,14 @@ public class ResponseImpl implements Response {
     @Override
     public JSONObject jsonpAsJSONObject() throws IOException {
         String body = body();
-        int startIndex = body.indexOf("(") + 1, endIndex = body.lastIndexOf(")");
+        int startIndex = body.indexOf('(') + 1, endIndex = body.lastIndexOf(')');
         return JSON.parseObject(body.substring(startIndex, endIndex));
     }
 
     @Override
     public JSONArray jsonpAsJSONArray() throws IOException {
         String body = body();
-        int startIndex = body.indexOf("(") + 1, endIndex = body.lastIndexOf(")");
+        int startIndex = body.indexOf('(') + 1, endIndex = body.lastIndexOf(')');
         return JSON.parseArray(body.substring(startIndex, endIndex));
     }
 
@@ -203,8 +203,8 @@ public class ResponseImpl implements Response {
             throw new IOException("写入文件失败!输入流为空!url:" + url());
         }
 
-        if (!Files.exists(file.getParent())) {
-            Files.createDirectories(file.getParent());
+        if (!file.getParent().toFile().exists()) {
+            file.getParent().toFile().mkdirs();
         }
 
         if (null != client.responseMeta.body) {
@@ -226,33 +226,31 @@ public class ResponseImpl implements Response {
                     Files.deleteIfExists(file);
                     byte[] buffer = new byte[8192];
                     int length = 0;
-                    FileOutputStream fos = new FileOutputStream(file.toFile());
-                    while((length=client.responseMeta.inputStream.read(buffer,0,buffer.length))>=0){
-                        fos.write(buffer,0,length);
-                        if(Thread.currentThread().isInterrupted()){
-                            logger.debug("线程中断,文件下载任务停止!");
-                            break;
+                    try (FileOutputStream fos = new FileOutputStream(file.toFile());){
+                        while((length=client.responseMeta.inputStream.read(buffer,0,buffer.length))>=0){
+                            fos.write(buffer,0,length);
+                            if(Thread.currentThread().isInterrupted()){
+                                logger.debug("线程中断,文件下载任务停止!");
+                                break;
+                            }
                         }
+                        fos.flush();
                     }
-                    fos.flush();
-                    fos.close();
                 } else {
-                    ReadableByteChannel readableByteChannel = Channels.newChannel(client.responseMeta.inputStream);
                     Set<StandardOpenOption> openOptions = null;
                     if (file.toFile().exists()) {
                         openOptions = EnumSet.of(StandardOpenOption.APPEND);
                     } else {
                         openOptions = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
                     }
-                    FileChannel fileChannel = FileChannel.open(file, openOptions);
-                    try {
+                    try (ReadableByteChannel readableByteChannel = Channels.newChannel(client.responseMeta.inputStream);
+                         FileChannel fileChannel = FileChannel.open(file, openOptions);){
                         fileChannel.transferFrom(readableByteChannel, Files.size(file), contentLength);
                     }catch (ClosedByInterruptException ex){
                         logger.debug("线程中断,文件下载任务停止!");
                         Thread.currentThread().interrupt();
                         break;
                     }
-                    fileChannel.close();
                 }
                 break;
             } catch (SocketTimeoutException | ConnectException ex) {
@@ -262,7 +260,7 @@ public class ResponseImpl implements Response {
             }
         }
         close();
-        if(retryTimes>client.requestMeta.retryTimes){
+        if(retryTimes>client.requestMeta.retryTimes&&null!=e){
             throw e;
         }
         if(Thread.currentThread().isInterrupted()){
@@ -273,7 +271,7 @@ public class ResponseImpl implements Response {
             long fileSize = file.toFile().exists() ? file.toFile().length() : 0;
             //检查是否下载成功
             long expectFileSize = fileSize + contentLength();
-            if (!client.responseMeta.headerMap.containsKey("Content-Encoding")&&(Files.notExists(file) || Files.size(file) != expectFileSize)) {
+            if (!client.responseMeta.headerMap.containsKey("Content-Encoding")&&(!file.toFile().exists() || Files.size(file) != expectFileSize)) {
                 logger.warn("文件下载失败,预期大小:{},实际大小:{},路径:{}", expectFileSize, Files.size(file), file);
                 return;
             }

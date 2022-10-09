@@ -109,7 +109,7 @@ public class CookieOptionImpl implements CookieOption {
         StringTokenizer st = new StringTokenizer(cookie, ";");
         while (st.hasMoreTokens()) {
             String token = st.nextToken();
-            int startIndex = token.indexOf("=");
+            int startIndex = token.indexOf('=');
             String name = token.substring(0, startIndex).trim();
             String value = token.substring(startIndex + 1).trim();
             addCookie(domain, path, name, value);
@@ -129,6 +129,7 @@ public class CookieOptionImpl implements CookieOption {
         httpCookie.setPath(path);
         httpCookie.setVersion(0);
         httpCookie.setDiscard(false);
+        httpCookie.setHttpOnly(true);
         addCookie(httpCookie);
     }
 

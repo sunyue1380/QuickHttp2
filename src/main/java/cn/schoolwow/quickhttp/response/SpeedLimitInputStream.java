@@ -51,9 +51,9 @@ public class SpeedLimitInputStream extends InputStream {
             long waitNanoTime = 1000000000L - (System.nanoTime() - lastRecordTime);
             if (waitNanoTime > 0) {
                 try {
-                    Thread.sleep(waitNanoTime / 1000000, (int) (waitNanoTime % 1000000));
+                    this.wait(waitNanoTime / 1000000, (int) (waitNanoTime % 1000000));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    logger.error("限速下载发生线程中断");
                 }
             }
             lastRecordTime = System.nanoTime();

@@ -179,8 +179,8 @@ public class QueryParser {
                 String pattern = escapeContent.substring(escapeContent.indexOf("~=") + 2);
                 evaluator = new Evaluator.AttributeWithValueMatching(key, Pattern.compile(pattern));
             } else if (content.contains("=")) {
-                String key = escapeContent.substring(0, escapeContent.indexOf("="));
-                String value = escapeContent.substring(escapeContent.indexOf("=") + 1);
+                String key = escapeContent.substring(0, escapeContent.indexOf('='));
+                String value = escapeContent.substring(escapeContent.indexOf('=') + 1);
                 evaluator = new Evaluator.AttributeWithValue(key, value);
             } else {
                 evaluator = new Evaluator.Attribute(content.substring(1, content.length() - 1));
@@ -305,12 +305,12 @@ public class QueryParser {
             }
             int count = last - pos + 1;
             String content = new String(chars, pos, count);
-            String data = content.substring(content.indexOf("(") + 1, content.lastIndexOf(")"));
+            String data = content.substring(content.indexOf('(') + 1, content.lastIndexOf(')'));
             int a = -1, b = -1;
             if (data.contains("n")) {
-                String token1 = data.substring(0, data.indexOf("n"));
-                String token2 = data.substring(data.indexOf("n") + 1);
-                if (!token1.equals("-")) {
+                String token1 = data.substring(0, data.indexOf('n'));
+                String token2 = data.substring(data.indexOf('n') + 1);
+                if (!token1.equals('-')) {
                     a = Integer.parseInt(token1);
                 }
                 b = Integer.parseInt(token2);
@@ -347,7 +347,7 @@ public class QueryParser {
                 last++;
             }
             String content = new String(chars, pos, last - pos + 1);
-            String data = content.substring(content.indexOf("(") + 1, content.lastIndexOf(")"));
+            String data = content.substring(content.indexOf('(') + 1, content.lastIndexOf(')'));
             Evaluator evaluator = null;
             if (content.contains(":lt")) {
                 evaluator = new Evaluator.IndexLessThan(Integer.parseInt(data));

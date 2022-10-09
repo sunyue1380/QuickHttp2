@@ -21,8 +21,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 public class RequestImpl implements Request {
@@ -182,6 +180,7 @@ public class RequestImpl implements Request {
         HttpCookie httpCookie = new HttpCookie(name,value);
         httpCookie.setMaxAge(3600000);
         httpCookie.setPath("/");
+        httpCookie.setHttpOnly(true);
         cookie(httpCookie);
         return this;
     }
@@ -337,13 +336,6 @@ public class RequestImpl implements Request {
 
     @Override
     public void enqueue(ResponseListener responseListener) {
-        if (null == clientConfig.threadPoolExecutor) {
-            synchronized (Request.class) {
-                if (null == clientConfig.threadPoolExecutor) {
-                    clientConfig.threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-                }
-            }
-        }
         clientConfig.threadPoolExecutor.execute(() -> {
             try {
                 Response response = execute();
@@ -374,7 +366,7 @@ public class RequestImpl implements Request {
             request.requestMeta = requestMeta;
             return request;
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            logger.error("克隆Request接口对象失败");
         }
         return null;
     }
